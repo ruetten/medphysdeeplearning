@@ -4,6 +4,9 @@ import numpy as np
 import nibabel as nib
 import os.path
 
+# NOTICE: This only works if the patient is either AD or CN. Anything else breaks.
+
+# Return a dictionary with image ids for each patient id
 def init():
 
     rows = []
@@ -46,6 +49,7 @@ def init():
     # print("AD: %d \nCN: %d" % (ones_ad, ones_cn))
     return counts
 
+# Load a tensor with all the image data for the provided patient id
 def parseData(ptid):
     ptids = init()
 
@@ -55,21 +59,42 @@ def parseData(ptid):
     # Initialize tensor with appropriate dimensions, and channels for each scan
     tensor = np.zeros([91, 109, 91, data["count"]])
 
+    # For each image id, load the data into the tensor
     for i in range(data["count"]):
         img_id = data["ids"][i]
         
-        try:
-            img_path = "AD_FDGPET_preprocessed/" + "Inf_NaN_stableAD__I" +img_id +"_masked_brain.nii.nii"
-            img = nib.load(img_path)
+        # Variables help keep the lines somewhat condensed
+        ad_dir = "AD_FDGPET_preprocessed"
+        ad_name = "Inf_NaN_stableAD__I" +img_id +"_masked_brain.nii.nii"
 
-            tensor[:, :, :, i] = img.get_fdata()
+        nc_dir = "NC_FDGPET_preprocessed"
+        nc_name = "Inf_NaN_stableNL__I" +img_id +"_masked_brain.nii.nii"
 
-        except:
-            print("ERR file does not exist %d" % i)
+        # Check for Alzheimer's scans (with and without extra _s)
+        if os.path.exists(ad_dir+"/" +ad_name):
+            img = nib.load(ad_dir +"/" +ad_name)
+        elif os.path.exists(ad_dir +"/" +"Inf_NaN_stableAD_I" +img_id +"_masked_brain.nii.nii"):
+            img = nib.load(ad_dir +"/" +"Inf_NaN_stableAD_I" +img_id +"_masked_brain.nii.nii")
+        
+        # Check for CN scans (with and without extra _s)
+        elif os.path.exists(nc_dir+"/" +nc_name):
+            img = nib.load(nc_dir +"/" +nc_name)
+        elif os.path.exists(nc_dir +"/" +"Inf_NaN_stableNL_I" +img_id +"_masked_brain.nii.nii"):
+            img = nib.load(nc_dir +"/" +"Inf_NaN_stableNL_I" +img_id +"_masked_brain.nii.nii")
 
-    print(tensor)
+        # If a file is not found, show an error and skip
+        else:
+            print("NIFTI image with %d ID (%d) not found" % (i, img_id))
+            continue
 
-    # XXX There are many Image IDs in the CSV file that do not have corresponding filenames in the ZIP directory.
+        # Load up the tensor with numerical data now that we have an image
+        tensor[:, :, :, i] = img.get_fdata()
 
+        # Possibly return?
+        # return tensor
 
+    # For debugging
+    print(tensor.shape)
+    
+# Doesn't have to be a text input, here just for example
 parseData(input("PTID from CSV: "))
