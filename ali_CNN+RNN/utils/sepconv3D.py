@@ -140,11 +140,11 @@ class SeparableConv3D (Conv3D):
             
             outputs = pointwise_conv
             
-            if self.bias:
-                outputs = K.bias_add(
-                        outputs,
-                        self.bias,
-                        data_format=self.data_format)
+            # if self.bias:
+            #     outputs = K.bias_add(
+            #             outputs,
+            #             self.bias,
+            #             data_format=self.data_format)
 
             if self.activation is not None:
                 return self.activation(outputs)

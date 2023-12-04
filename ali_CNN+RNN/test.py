@@ -25,7 +25,8 @@ optimizer = Adam(lr=1e-5)
 final_layer_size = 5
 
 # TODO
-model_filepath = '//data/data_wnx3/data_wnx1/_Data/AlzheimersDL/CNN+RNN-2class-1cnn-CLEAN'
+model_filepath = './dir'
+# model_filepath = '//data/data_wnx3/data_wnx1/_Data/AlzheimersDL/CNN+RNN-2class-1cnn-CLEAN'
 
 params_dict = { 'CNN_w_regularizer': CNN_w_regularizer, 'RNN_w_regularizer': RNN_w_regularizer,
                'CNN_batch_size': CNN_batch_size, 'RNN_batch_size': RNN_batch_size,
@@ -37,10 +38,8 @@ params_dict = { 'CNN_w_regularizer': CNN_w_regularizer, 'RNN_w_regularizer': RNN
           'optimizer': optimizer, 'RNN_drop_rate': RNN_drop_rate,}
 
 params = Parameters(params_dict)
-
-picklename = '1820'
 netCNN = CNN_Net(params)
-netCNN.load_the_weights("SavedCNNWeights")
+netCNN.load_the_weights("dir/SavedCNNWeights")
 print(netCNN)
 # pickle_in = open(model_filepath+'/'+picklename+'.pickle', 'rb') 
 # pickle0=pickle.load(pickle_in)
