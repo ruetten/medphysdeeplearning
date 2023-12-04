@@ -17,11 +17,11 @@ def init():
             row = row[0].split(",")
 
             if row[0] == "AD" or row[0] == "CN":
-                rows.append(row[0:4])
+                rows.append(row[0:5])
                 
     rows.sort(key=lambda e: e[2])
 
-    counts = {'0': {"ids": [], "count": 0}}
+    counts = {'0': {"ids": [], "count": 0, "dates": []}}
     cur_id = '0'
     count = 0
     ones_ad = 0
@@ -40,13 +40,14 @@ def init():
             # Initialize variables for next Patient ID
             count = 1
             cur_id = row[2]
-            counts[cur_id] = {"ids": [row[3]], "count": 0}
+            counts[cur_id] = {"ids": [row[3]], "count": 0, "dates": [row[4]]}
 
         else:
             count += 1
             counts[cur_id]["ids"].append(row[3]) 
+            counts[cur_id]["dates"].append(row[4])
 
-    # print("AD: %d \nCN: %d" % (ones_ad, ones_cn))
+    print("AD: %d \nCN: %d" % (ones_ad, ones_cn))
     return counts
 
 # Load a tensor with all the image data for the provided patient id
@@ -62,6 +63,7 @@ def parseData(ptid):
     # For each image id, load the data into the tensor
     for i in range(data["count"]):
         img_id = data["ids"][i]
+        print(data["dates"][i])
         
         # Variables help keep the lines somewhat condensed
         ad_dir = "AD_FDGPET_preprocessed"
@@ -84,10 +86,11 @@ def parseData(ptid):
 
         # If a file is not found, show an error and skip
         else:
-            print("NIFTI image with %d ID (%d) not found" % (i, img_id))
+            print("NIFTI image with", i, "ID (", img_id, ") not found")
             continue
 
         # Load up the tensor with numerical data now that we have an image
+        # print(img.get_fdata().shape)
         tensor[:, :, :, i] = img.get_fdata()
 
         # Possibly return?
