@@ -1,0 +1,10 @@
+NC_FDGPET_preprocessed/
+AD_FDGPET_preprocessed/
+*.zip
+*.nii
+*.pyc
+QTNI_MRI_preprocess_v1.5/
+QTNI_PET_preprocess_v1.2/
+vit-pytorch/
+vit-tensorflow/
+.DS_Store
