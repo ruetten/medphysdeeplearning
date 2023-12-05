@@ -2,9 +2,21 @@ import csv
 from datetime import datetime as dt
 import numpy as np
 import nibabel as nib
+import re
 import os.path
 
 # NOTICE: This only works if the patient is either AD or CN. Anything else breaks.
+
+# Convert a formatted date (MM/DD/YYYY or DD-MM-YYYY) to milliseconds since Jan 1, 1970
+def convertDate(formattedDate):
+    p1 = "%m/%d/%Y"
+    p2 = "%d-%m-%Y"
+    epoch = dt(1970, 1, 1)
+
+    if re.compile("\d+/\d+/\d{2,4}").fullmatch(formattedDate):
+        return (dt.strptime(formattedDate, p1) - epoch).total_seconds()
+    elif re.compile("\d+-\d+-\d{2,4}").fullmatch(formattedDate):
+        return (dt.strptime(formattedDate, p2) - epoch).total_seconds()
 
 # Return a dictionary with image ids for each patient id
 def init():
@@ -17,11 +29,12 @@ def init():
             row = row[0].split(",")
 
             if row[0] == "AD" or row[0] == "CN":
-                rows.append(row[0:4])
-                
+                rows.append(row[0:5])
+
+    # Sort by patient ID       
     rows.sort(key=lambda e: e[2])
 
-    counts = {'0': {"ids": [], "count": 0}}
+    counts = {'0': {"ids": [], "count": 0, "examdate": []}}
     cur_id = '0'
     count = 0
     ones_ad = 0
@@ -40,11 +53,12 @@ def init():
             # Initialize variables for next Patient ID
             count = 1
             cur_id = row[2]
-            counts[cur_id] = {"ids": [row[3]], "count": 0}
+            counts[cur_id] = {"ids": [row[3]], "count": 0, "examdate": [convertDate(row[4])]}
 
         else:
             count += 1
-            counts[cur_id]["ids"].append(row[3]) 
+            counts[cur_id]["ids"].append(row[3])
+            counts[cur_id]["examdate"].append(convertDate(row[4]))
 
     # print("AD: %d \nCN: %d" % (ones_ad, ones_cn))
     return counts
@@ -56,8 +70,13 @@ def parseData(ptid):
     data = ptids[ptid]
     print(data)
 
+    # Find time delta using initial exam dates. Time in milliseconds
+    delta = max(data["examdate"]) - min(data["examdate"])
+    print(delta)
+
     # Initialize tensor with appropriate dimensions, and channels for each scan
-    tensor = np.zeros([91, 109, 91, data["count"]])
+    # NOTE: Samarth said that the first dimension should be the channel count
+    tensor = np.zeros([data["count"], 91, 109, 91])
 
     # For each image id, load the data into the tensor
     for i in range(data["count"]):
@@ -88,7 +107,7 @@ def parseData(ptid):
             continue
 
         # Load up the tensor with numerical data now that we have an image
-        tensor[:, :, :, i] = img.get_fdata()
+        tensor[i, :, :, :] = img.get_fdata()
 
         # Possibly return?
         # return tensor
