@@ -103,7 +103,14 @@ def evaluate_net (seed):
     rnn_HpredsT3 = featuresModel_CNN.predict([rnn_HdataT3[0],rnn_HdataT3[1],rnn_HdataT3[2]]) 
     rnn_ApredsT1 = featuresModel_CNN.predict([rnn_AdataT1[0],rnn_AdataT1[1],rnn_AdataT1[2]])
     rnn_ApredsT2 = featuresModel_CNN.predict([rnn_AdataT2[0],rnn_AdataT2[1],rnn_AdataT2[2]])
-    rnn_ApredsT3 = featuresModel_CNN.predict([rnn_AdataT3[0],rnn_AdataT3[1],rnn_AdataT3[2]])     
+    rnn_ApredsT3 = featuresModel_CNN.predict([rnn_AdataT3[0],rnn_AdataT3[1],rnn_AdataT3[2]])    
+    print(rnn_HpredsT1, rnn_HpredsT1.shape)
+    print(rnn_HpredsT2, rnn_HpredsT2.shape)
+    print(rnn_HpredsT3, rnn_HpredsT3.shape)
+    print(rnn_ApredsT1, rnn_ApredsT1.shape)
+    print(rnn_ApredsT2, rnn_ApredsT2.shape)
+    print(rnn_ApredsT3, rnn_ApredsT3.shape)
+    
 
 #grab the PTIDs for each dataset
     rnn_HptidT1 = rnn_HdataT1[4]
