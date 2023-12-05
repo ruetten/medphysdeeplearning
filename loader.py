@@ -60,7 +60,7 @@ def init():
             counts[cur_id]["ids"].append(row[3])
             counts[cur_id]["examdate"].append(convertDate(row[4]))
 
-    # print("AD: %d \nCN: %d" % (ones_ad, ones_cn))
+    print("AD: %d \nCN: %d" % (ones_ad, ones_cn))
     return counts
 
 # Load a tensor with all the image data for the provided patient id
@@ -81,6 +81,7 @@ def parseData(ptid):
     # For each image id, load the data into the tensor
     for i in range(data["count"]):
         img_id = data["ids"][i]
+        print(data["dates"][i])
         
         # Variables help keep the lines somewhat condensed
         ad_dir = "AD_FDGPET_preprocessed"
@@ -103,7 +104,7 @@ def parseData(ptid):
 
         # If a file is not found, show an error and skip
         else:
-            print("NIFTI image with %d ID (%d) not found" % (i, img_id))
+            print("NIFTI image with", i, "ID (", img_id, ") not found")
             continue
 
         # Load up the tensor with numerical data now that we have an image
