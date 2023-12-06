@@ -22,6 +22,8 @@ from copy import deepcopy
 import matplotlib.colors as mcolors
 import nibabel as nib
 import math
+import csv
+import numpy as np
 
 import sys
 sys.path.append('//data/data_wnx3/data_wnx1/_Data/AlzheimersDL/CNN+RNN-2class-1cnn-CLEAN/utils')
@@ -57,7 +59,7 @@ mri_datapath = '//data/data_wnx3/data_wnx1/_Data/AlzheimersDL/CNN+RNN-2class-1cn
 
 params_dict = { 'CNN_w_regularizer': CNN_w_regularizer,
                'CNN_batch_size': CNN_batch_size,
-               'CNN_drop_rate': CNN_drop_rate, 'epochs': 200,
+               'CNN_drop_rate': CNN_drop_rate, 'epochs': 50,
           'gpu': "/gpu:0", 'model_filepath': model_filepath, 
           'image_shape': (target_rows, target_cols, depth, axis),
           'num_clinical': num_clinical,
@@ -95,6 +97,480 @@ def evaluate_net (seed):
     test_predsCNN = netCNN.predict(test_data)
     print('check_lossCNN, check_accCNN: '+ str(test_lossCNN)+', '+ str(test_accCNN))
     """
+    
+    rnn_HpredsT1 = featuresModel_CNN.predict([rnn_HdataT1[0],rnn_HdataT1[1],rnn_HdataT1[2]])
+    rnn_HpredsT2 = featuresModel_CNN.predict([rnn_HdataT2[0],rnn_HdataT2[1],rnn_HdataT2[2]])
+    rnn_HpredsT3 = featuresModel_CNN.predict([rnn_HdataT3[0],rnn_HdataT3[1],rnn_HdataT3[2]]) 
+    rnn_ApredsT1 = featuresModel_CNN.predict([rnn_AdataT1[0],rnn_AdataT1[1],rnn_AdataT1[2]])
+    rnn_ApredsT2 = featuresModel_CNN.predict([rnn_AdataT2[0],rnn_AdataT2[1],rnn_AdataT2[2]])
+    rnn_ApredsT3 = featuresModel_CNN.predict([rnn_AdataT3[0],rnn_AdataT3[1],rnn_AdataT3[2]])
+    
+    print(rnn_HpredsT1.shape, 0)
+    print(rnn_HpredsT2.shape, 0)
+    print(rnn_HpredsT3.shape, 0)
+    print(rnn_ApredsT1.shape, 1)
+    print(rnn_ApredsT2.shape, 1)
+    print(rnn_ApredsT3.shape, 1)
+    
+    #grab the PTIDs for each dataset
+    rnn_HptidT1 = rnn_HdataT1[4]
+    rnn_HptidT2 = rnn_HdataT2[4]
+    rnn_HptidT3 = rnn_HdataT3[4]
+    rnn_AptidT1 = rnn_AdataT1[4]
+    rnn_AptidT2 = rnn_AdataT2[4]
+    rnn_AptidT3 = rnn_AdataT3[4]
+    
+    #grab the imageIDs for each dataset
+    rnn_HimageIDT1 = rnn_HdataT1[5]
+    rnn_HimageIDT2 = rnn_HdataT2[5]
+    rnn_HimageIDT3 = rnn_HdataT3[5]
+    rnn_AimageIDT1 = rnn_AdataT1[5]
+    rnn_AimageIDT2 = rnn_AdataT2[5]
+    rnn_AimageIDT3 = rnn_AdataT3[5]
+
+    # Combine the data for each class
+    data_Hpreds = [(0, rnn_HpredsT1, rnn_HptidT1, rnn_HimageIDT1),
+                   (0, rnn_HpredsT2, rnn_HptidT2, rnn_HimageIDT2),
+                   (0, rnn_HpredsT3, rnn_HptidT3, rnn_HimageIDT3)]
+    
+    data_Apreds = [(1, rnn_ApredsT1, rnn_AptidT1, rnn_AimageIDT1),
+                   (1, rnn_ApredsT2, rnn_AptidT2, rnn_AimageIDT2),
+                   (1, rnn_ApredsT3, rnn_AptidT3, rnn_AimageIDT3)]
+    
+    # Combine the data for both classes
+    all_data = data_Hpreds + data_Apreds
+    
+    # Define the CSV file name
+    csv_file_name = "predictions.csv"
+    
+    # Write data to CSV file
+    with open(csv_file_name, 'w', newline='') as csv_file:
+        csv_writer = csv.writer(csv_file)
+    
+        # Write header
+        csv_writer.writerow(['Class', 'Predictions', 'PTIDs', 'ImageIDs'])
+    
+        # Write data rows
+        for row in all_data:
+            class_label, predictions, ptids, imageids = row
+            predictions_str = np.array2string(predictions, precision=6, separator=', ', suppress_small=True)
+            csv_writer.writerow([class_label, predictions_str, ptids, imageids])
+    
+    print(f"CSV file '{csv_file_name}' has been created.")
+    
+#add dummy feature vectors to all missing timepoints
+    dummyVector = np.full((final_layer_size),-1)
+
+    #Healthy patients
+    rnn_HpredsT1_padded = []
+    rnn_HpredsT2_padded = []
+    rnn_HpredsT3_padded = []
+    rnn_HptidT1_padded = []
+    rnn_HptidT2_padded = []
+    rnn_HptidT3_padded = []
+    rnn_HimageIDT1_padded = []
+    rnn_HimageIDT2_padded = []
+    rnn_HimageIDT3_padded = []
+    j=0
+    HrnnT1T2T3 = 0
+    HrnnT1T2 = 0
+    HrnnT1T3 = 0
+    HrnnT1 = 0
+    HrnnT2 = 0
+    HrnnT2T3 = 0
+    HrnnT3 = 0
+    HrnnT1Removed = 0
+    for ptidT1 in rnn_HptidT1:
+        rnn_HpredsT1_padded.append(rnn_HpredsT1[j])
+        rnn_HptidT1_padded.append(ptidT1)
+        rnn_HimageIDT1_padded.append(rnn_HimageIDT1[j])
+        j+=1
+        c=0
+        k=0
+        t2 = False
+        t3 = False
+        for ptidT2 in rnn_HptidT2:
+            c+=1
+            if ptidT1 == ptidT2:
+                rnn_HpredsT2_padded.append(rnn_HpredsT2[c-1])
+                rnn_HptidT2_padded.append(ptidT2)
+                rnn_HimageIDT2_padded.append(rnn_HimageIDT2[c-1])
+                t2 = True
+                for ptidT3 in rnn_HptidT3:
+                    k+=1
+                    if ptidT1 == ptidT3:
+                        rnn_HpredsT3_padded.append(rnn_HpredsT3[k-1])
+                        rnn_HptidT3_padded.append(ptidT3)
+                        rnn_HimageIDT3_padded.append(rnn_HimageIDT3[k-1])
+                        HrnnT1T2T3+=1
+                        t3 = True
+                        break
+                if t3 == False:
+                    rnn_HpredsT3_padded.append(dummyVector)
+                    rnn_HptidT3_padded.append(ptidT1)
+                    rnn_HimageIDT3_padded.append('dummy')
+                    HrnnT1T2+=1
+                    break
+        if t2 == False:
+            rnn_HpredsT2_padded.append(dummyVector)
+            rnn_HptidT2_padded.append(ptidT1)
+            rnn_HimageIDT2_padded.append('dummy')
+            for ptidT3 in rnn_HptidT3:
+                k+=1
+                if ptidT1 == ptidT3:
+                    rnn_HpredsT3_padded.append(rnn_HpredsT3[k-1])
+                    rnn_HptidT3_padded.append(ptidT3)
+                    rnn_HimageIDT3_padded.append(rnn_HimageIDT3[k-1])
+                    HrnnT1T3+=1
+                    t3 = True
+                    break    
+            if t3 == False:
+                #rnn_HpredsT3_padded.append(dummyVector)
+                HrnnT1+=1
+                rnn_HpredsT1_padded.pop(-1)   #remove any scans that have only T1
+                rnn_HpredsT2_padded.pop(-1)
+                rnn_HptidT1_padded.pop(-1)
+                rnn_HptidT2_padded.pop(-1)
+                rnn_HimageIDT1_padded.pop(-1)
+                rnn_HimageIDT2_padded.pop(-1)
+                HrnnT1Removed+=1
+    c=0
+    for ptidT2 in rnn_HptidT2:
+        c+=1
+        j=0
+        k=0
+        match = False
+        t3=False
+        for ptidT1 in rnn_HptidT1:
+            j+=1
+            if ptidT2 == ptidT1:
+                match = True
+        if match == False:
+            rnn_HpredsT2_padded.append(rnn_HpredsT2[c-1])
+            rnn_HpredsT1_padded.append(dummyVector)
+            rnn_HptidT2_padded.append(ptidT2)
+            rnn_HimageIDT2_padded.append(rnn_HimageIDT2[c-1])
+            rnn_HptidT1_padded.append(ptidT1)
+            rnn_HimageIDT1_padded.append('dummy')
+            for ptidT3 in rnn_HptidT3:
+                k+=1
+                if ptidT2 == ptidT3:
+                    rnn_HpredsT3_padded.append(rnn_HpredsT3[k-1])
+                    rnn_HptidT3_padded.append(ptidT2)
+                    rnn_HimageIDT3_padded.append(rnn_HimageIDT3[k-1])
+                    t3 = True
+                    HrnnT2T3+=1
+                    break
+            if t3 == False:
+                rnn_HpredsT3_padded.append(dummyVector)
+                rnn_HptidT3_padded.append(ptidT1)
+                rnn_HimageIDT3_padded.append('dummy')
+                HrnnT2+=1
+    k=0
+    for ptidT3 in rnn_HptidT3:
+        k+=1
+        j=0
+        c=0
+        match1 = False
+        for ptidT1 in rnn_HptidT1:
+            j+=1
+            if ptidT3 == ptidT1:
+                match1 = True
+#        if match1 == True:
+#            break
+        if match1 == False:
+            match2 = False
+            for ptidT2 in rnn_HptidT2:
+                c+=1
+                if ptidT3 == ptidT2:
+                    match2 = True
+#            if match2 == True:
+#                break
+            if match2 == False:
+                rnn_HpredsT3_padded.append(rnn_HpredsT3[k-1])
+                rnn_HptidT3_padded.append(ptidT3)
+                rnn_HimageIDT3_padded.append(rnn_HimageIDT3[k-1])
+                rnn_HpredsT1_padded.append(dummyVector)
+                rnn_HptidT1_padded.append(ptidT1)
+                rnn_HimageIDT1_padded.append('dummy')
+                rnn_HpredsT2_padded.append(dummyVector)
+                rnn_HptidT2_padded.append(ptidT1)
+                rnn_HimageIDT2_padded.append('dummy')
+                HrnnT3+=1
+            
+    #move the data from a list to an array
+    j=0
+    c=0
+    k=0
+    LenPadded = len(rnn_HpredsT1_padded)
+    rnn_HpredsT1_padArray = np.zeros((LenPadded,final_layer_size), dtype=object)
+    rnn_HpredsT2_padArray = np.zeros((LenPadded,final_layer_size), dtype=object)
+    rnn_HpredsT3_padArray = np.zeros((LenPadded,final_layer_size), dtype=object)
+    for vector in rnn_HpredsT1_padded:
+        rnn_HpredsT1_padArray[j] = vector
+        j+=1
+    for vector in rnn_HpredsT2_padded:
+        rnn_HpredsT2_padArray[c] = vector
+        c+=1
+    for vector in rnn_HpredsT3_padded:
+        rnn_HpredsT3_padArray[k] = vector
+        k+=1    
+        
+    with open(model_filepath+'/figures/paddedPreds.txt','w') as paddedPreds:
+            paddedPreds.write('Train Preds Sizes: '+'\n') 
+            paddedPreds.write('Type of rnn_HpredsT1: '+str(type(rnn_HpredsT1))+'\n')            
+            paddedPreds.write('Type of rnn_HpredsT1_padded: '+str(type(rnn_HpredsT1_padded))+'\n')
+            paddedPreds.write('Type of rnn_HpredsT1_padArray: '+str(type(rnn_HpredsT1_padArray))+'\n')  
+            paddedPreds.write('Type of rnn_HpredsT1 elements: '+str(type(rnn_HpredsT1[0]))+'\n')            
+            paddedPreds.write('Type of rnn_HpredsT1_padded elements: '+str(type(rnn_HpredsT1_padded[0]))+'\n')
+            paddedPreds.write('Type of rnn_HpredsT1_padArray elements: '+str(type(rnn_HpredsT1_padArray[0]))+'\n')
+            paddedPreds.write('Length of rnn_HpredsT1: '+str(len(rnn_HpredsT1))+'\n')
+            paddedPreds.write('Length of rnn_HpredsT1_padded: '+str(len(rnn_HpredsT1_padded))+'\n')
+            paddedPreds.write('Length of rnn_HpredsT2_padded: '+str(len(rnn_HpredsT2_padded))+'\n')
+            paddedPreds.write('Length of rnn_HpredsT3_padded: '+str(len(rnn_HpredsT3_padded))+'\n')
+            paddedPreds.write('Length of rnn_HpredsT1_padArray: '+str(len(rnn_HpredsT1_padArray))+'\n')
+            paddedPreds.write('Length of rnn_HpredsT2_padArray: '+str(len(rnn_HpredsT2_padArray))+'\n')
+            paddedPreds.write('Length of rnn_HpredsT3_padArray: '+str(len(rnn_HpredsT3_padArray))+'\n')
+            paddedPreds.write('Length of rnn_HptidT1_padded: '+str(len(rnn_HptidT1_padded))+'\n')
+            paddedPreds.write('Length of rnn_HptidT2_padded: '+str(len(rnn_HptidT2_padded))+'\n')
+            paddedPreds.write('Length of rnn_HptidT3_padded: '+str(len(rnn_HptidT3_padded))+'\n')
+            paddedPreds.write('Length of rnn_HimageIDT1_padded: '+str(len(rnn_HimageIDT1_padded))+'\n')
+            paddedPreds.write('Length of rnn_HimageIDT2_padded: '+str(len(rnn_HimageIDT2_padded))+'\n')
+            paddedPreds.write('Length of rnn_HimageIDT3_padded: '+str(len(rnn_HimageIDT3_padded))+'\n')
+            paddedPreds.write('RNN_HpredsT1_padded: '+str(rnn_HpredsT1_padded)+'\n')
+            paddedPreds.write('Compare to RNN_HpredsT1: '+str(rnn_HpredsT1)+'\n')
+            paddedPreds.write('RNN_HpredsT1_padArray: '+str(rnn_HpredsT1_padArray)+'\n')
+            paddedPreds.write('RNN_HpredsT2_padArray: '+str(rnn_HpredsT2_padArray)+'\n')
+            paddedPreds.write('RNN_HpredsT3_padArray: '+str(rnn_HpredsT3_padArray)+'\n')
+            paddedPreds.write('Shape of RNN_HpredsT1_padArray: '+str(rnn_HpredsT1_padArray.shape)+'\n')
+            paddedPreds.write('Shape of RNN_HpredsT1: '+str(rnn_HpredsT1.shape)+'\n')
+            paddedPreds.write('RNN_HpredsT1[0]: '+str(rnn_HpredsT1[0])+'\n')
+            paddedPreds.write('rnn_HpredsT1[0][0]: '+str(rnn_HpredsT1[0][0])+'\n')
+            paddedPreds.write('rnn_HpredsT1_padArray[0]: '+str(rnn_HpredsT1_padArray[0])+'\n')
+            paddedPreds.write('rnn_HpredsT1_padArray[0][0]: '+str(rnn_HpredsT1_padArray[0][0])+'\n')
+            paddedPreds.write('# of Hrnn T1 only: '+str(HrnnT1)+'\n')
+            paddedPreds.write('# of Hrnn T1 only Removed: '+str(HrnnT1Removed)+'\n')
+            paddedPreds.write('# of Hrnn T1+T2: '+str(HrnnT1T2)+'\n')
+            paddedPreds.write('# of Hrnn T1+T2+T3: '+str(HrnnT1T2T3)+'\n')
+            paddedPreds.write('# of Hrnn T1+T3: '+str(HrnnT1T3)+'\n')
+            paddedPreds.write('# of Hrnn T2 only: '+str(HrnnT2)+'\n')
+            paddedPreds.write('# of Hrnn T2+T3: '+str(HrnnT2T3)+'\n')
+            paddedPreds.write('# of Hrnn T3 only: '+str(HrnnT3)+'\n')
+
+    #AD patients
+    rnn_ApredsT1_padded = []
+    rnn_ApredsT2_padded = []
+    rnn_ApredsT3_padded = []
+    rnn_AptidT1_padded = []
+    rnn_AptidT2_padded = []
+    rnn_AptidT3_padded = []
+    rnn_AimageIDT1_padded = []
+    rnn_AimageIDT2_padded = []
+    rnn_AimageIDT3_padded = []
+    j=0
+    ArnnT1T2T3 = 0
+    ArnnT1T2 = 0
+    ArnnT1T3 = 0
+    ArnnT1 = 0
+    ArnnT2 = 0
+    ArnnT2T3 = 0
+    ArnnT3 = 0
+    ArnnT1Removed = 0
+    for ptidT1 in rnn_AptidT1:
+        rnn_ApredsT1_padded.append(rnn_ApredsT1[j])
+        rnn_AptidT1_padded.append(ptidT1)
+        rnn_AimageIDT1_padded.append(rnn_AimageIDT1[j])
+        j+=1
+        c=0
+        k=0
+        t2 = False
+        t3 = False
+        for ptidT2 in rnn_AptidT2:
+            c+=1
+            if ptidT1 == ptidT2:
+                rnn_ApredsT2_padded.append(rnn_ApredsT2[c-1])
+                rnn_AptidT2_padded.append(ptidT2)
+                rnn_AimageIDT2_padded.append(rnn_AimageIDT2[c-1])
+                t2 = True
+                for ptidT3 in rnn_AptidT3:
+                    k+=1
+                    if ptidT1 == ptidT3:
+                        rnn_ApredsT3_padded.append(rnn_ApredsT3[k-1])
+                        rnn_AptidT3_padded.append(ptidT3)
+                        rnn_AimageIDT3_padded.append(rnn_AimageIDT3[k-1])
+                        ArnnT1T2T3+=1
+                        t3 = True
+                        break
+                if t3 == False:
+                    rnn_ApredsT3_padded.append(dummyVector)
+                    rnn_AptidT3_padded.append(ptidT1)
+                    rnn_AimageIDT3_padded.append('dummy')
+                    ArnnT1T2+=1
+                    break
+        if t2 == False:
+            rnn_ApredsT2_padded.append(dummyVector)
+            rnn_AptidT2_padded.append(ptidT1)
+            rnn_AimageIDT2_padded.append('dummy')
+            for ptidT3 in rnn_AptidT3:
+                k+=1
+                if ptidT1 == ptidT3:
+                    rnn_ApredsT3_padded.append(rnn_ApredsT3[k-1])
+                    rnn_AptidT3_padded.append(ptidT3)
+                    rnn_AimageIDT3_padded.append(rnn_AimageIDT3[k-1])
+                    ArnnT1T3+=1
+                    t3 = True
+                    break    
+            if t3 == False:
+                #rnn_ApredsT3_padded.append(dummyVector)
+                ArnnT1+=1
+                rnn_ApredsT1_padded.pop(-1)   #remove any scans that have only T1
+                rnn_ApredsT2_padded.pop(-1)
+                rnn_AptidT1_padded.pop(-1)
+                rnn_AimageIDT1_padded.pop(-1)
+                rnn_AptidT2_padded.pop(-1)
+                rnn_AimageIDT2_padded.pop(-1)
+                ArnnT1Removed+=1
+    c=0
+    for ptidT2 in rnn_AptidT2:
+        c+=1
+        j=0
+        k=0
+        match = False
+        t3=False
+        for ptidT1 in rnn_AptidT1:
+            j+=1
+            if ptidT2 == ptidT1:
+                match = True
+        if match == False:
+            rnn_ApredsT2_padded.append(rnn_ApredsT2[c-1])
+            rnn_AptidT2_padded.append(ptidT2)
+            rnn_AimageIDT2_padded.append(rnn_AimageIDT2[c-1])
+            rnn_ApredsT1_padded.append(dummyVector)
+            rnn_AptidT1_padded.append(ptidT1)
+            rnn_AimageIDT1_padded.append('dummy')
+            for ptidT3 in rnn_AptidT3:
+                k+=1
+                if ptidT2 == ptidT3:
+                    rnn_ApredsT3_padded.append(rnn_ApredsT3[k-1])
+                    rnn_AptidT3_padded.append(ptidT3)
+                    rnn_AimageIDT3_padded.append(rnn_AimageIDT3[k-1])
+                    t3 = True
+                    ArnnT2T3+=1
+                    break
+            if t3 == False:
+                rnn_ApredsT3_padded.append(dummyVector)
+                rnn_AptidT3_padded.append(ptidT1)
+                rnn_AimageIDT3_padded.append('dummy')
+                ArnnT2+=1
+    k=0
+    for ptidT3 in rnn_AptidT3:
+        k+=1
+        j=0
+        c=0
+        match1 = False
+        for ptidT1 in rnn_AptidT1:
+            j+=1
+            if ptidT3 == ptidT1:
+                match1 = True
+#        if match1 == True:
+#            break
+        if match1 == False:
+            match2 = False
+            for ptidT2 in rnn_AptidT2:
+                c+=1
+                if ptidT3 == ptidT2:
+                    match2 = True
+#            if match2 == True:
+#                break
+            if match2 == False:
+                rnn_ApredsT3_padded.append(rnn_ApredsT3[k-1])
+                rnn_AptidT3_padded.append(ptidT3)
+                rnn_AimageIDT3_padded.append(rnn_AimageIDT3[k-1])
+                rnn_ApredsT1_padded.append(dummyVector)
+                rnn_AptidT1_padded.append(ptidT1)
+                rnn_AimageIDT1_padded.append('dummy')
+                rnn_ApredsT2_padded.append(dummyVector)
+                rnn_AptidT2_padded.append(ptidT1)
+                rnn_AimageIDT2_padded.append('dummy')
+                ArnnT3+=1
+            
+    #move the data from a list to an array
+    j=0
+    c=0
+    k=0
+    LenPadded = len(rnn_ApredsT1_padded)
+    rnn_ApredsT1_padArray = np.zeros((LenPadded,final_layer_size), dtype=object)
+    rnn_ApredsT2_padArray = np.zeros((LenPadded,final_layer_size), dtype=object)
+    rnn_ApredsT3_padArray = np.zeros((LenPadded,final_layer_size), dtype=object)
+    for vector in rnn_ApredsT1_padded:
+        rnn_ApredsT1_padArray[j] = vector
+        j+=1
+    for vector in rnn_ApredsT2_padded:
+        rnn_ApredsT2_padArray[c] = vector
+        c+=1
+    for vector in rnn_ApredsT3_padded:
+        rnn_ApredsT3_padArray[k] = vector
+        k+=1    
+        
+    with open(model_filepath+'/figures/paddedPreds.txt','a') as paddedPreds:
+            paddedPreds.write('Length of rnn_ApredsT1_padArray: '+str(len(rnn_ApredsT1_padArray))+'\n')
+            paddedPreds.write('Length of rnn_ApredsT2_padArray: '+str(len(rnn_ApredsT2_padArray))+'\n')
+            paddedPreds.write('Length of rnn_ApredsT3_padArray: '+str(len(rnn_ApredsT3_padArray))+'\n')
+            paddedPreds.write('Length of rnn_AptidT1_padded: '+str(len(rnn_AptidT1_padded))+'\n')
+            paddedPreds.write('Length of rnn_AptidT2_padded: '+str(len(rnn_AptidT2_padded))+'\n')
+            paddedPreds.write('Length of rnn_AptidT3_padded: '+str(len(rnn_AptidT3_padded))+'\n')
+            paddedPreds.write('Length of rnn_AimageIDT1_padded: '+str(len(rnn_AimageIDT1_padded))+'\n')
+            paddedPreds.write('Length of rnn_AimageIDT2_padded: '+str(len(rnn_AimageIDT2_padded))+'\n')
+            paddedPreds.write('Length of rnn_AimageIDT3_padded: '+str(len(rnn_AimageIDT3_padded))+'\n')
+            paddedPreds.write('# of Arnn T1 only: '+str(ArnnT1)+'\n')
+            paddedPreds.write('# of Arnn T1 only Removed: '+str(ArnnT1Removed)+'\n')
+            paddedPreds.write('# of Arnn T1+T2: '+str(ArnnT1T2)+'\n')
+            paddedPreds.write('# of Arnn T1+T2+T3: '+str(ArnnT1T2T3)+'\n')
+            paddedPreds.write('# of Arnn T1+T3: '+str(ArnnT1T3)+'\n')
+            paddedPreds.write('# of Arnn T2 only: '+str(ArnnT2)+'\n')
+            paddedPreds.write('# of Arnn T2+T3: '+str(ArnnT2T3)+'\n')
+            paddedPreds.write('# of Arnn T3 only: '+str(ArnnT3)+'\n')            
+
+#Balance the datasets: (drop the last scans from the H datasets to make the A and H datasets equal. Should be different patients each time because I shuffled in get_filenames
+    diff = len(rnn_HpredsT1_padArray)-len(rnn_ApredsT1_padArray)
+    for i in range(diff):
+        rnn_HpredsT1_padArray = np.delete(rnn_HpredsT1_padArray,-1,0)
+        rnn_HpredsT2_padArray = np.delete(rnn_HpredsT2_padArray,-1,0)
+        rnn_HpredsT3_padArray = np.delete(rnn_HpredsT3_padArray,-1,0)
+    dummyCountHT1 = 0
+    dummyCountHT2 = 0
+    dummyCountHT3 = 0
+    dummyCountAT1 = 0
+    dummyCountAT2 = 0
+    dummyCountAT3 = 0
+    for i in range(len(rnn_HpredsT1_padArray)):
+        if rnn_HpredsT1_padArray[i][0] == -1:
+            dummyCountHT1 += 1
+        if rnn_HpredsT2_padArray[i][0] == -1:
+            dummyCountHT2 += 1
+        if rnn_HpredsT3_padArray[i][0] == -1:
+            dummyCountHT3 += 1
+    for i in range(len(rnn_ApredsT1_padArray)):
+        if rnn_ApredsT1_padArray[i][0] == -1:
+            dummyCountAT1 += 1
+        if rnn_ApredsT2_padArray[i][0] == -1:
+            dummyCountAT2 += 1
+        if rnn_ApredsT3_padArray[i][0] == -1:
+            dummyCountAT3 += 1
+    with open(model_filepath+'/figures/paddedPreds.txt','a') as paddedPreds:
+        paddedPreds.write('Length of rnn_HpredsT1_padArray popped: '+str(len(rnn_HpredsT1_padArray))+'\n')
+        paddedPreds.write('Length of rnn_HpredsT2_padArray popped: '+str(len(rnn_HpredsT2_padArray))+'\n')
+        paddedPreds.write('Length of rnn_HpredsT3_padArray popped: '+str(len(rnn_HpredsT3_padArray))+'\n')
+    with open(model_filepath+'/figures/DataList.txt','a') as datalist:
+        datalist.write('Number of scans in HT1 (excluding dummies): '+str(len(rnn_HpredsT1_padArray)-dummyCountHT1)+'\n')
+        datalist.write('Number of scans in HT2 (excluding dummies): '+str(len(rnn_HpredsT2_padArray)-dummyCountHT2)+'\n')
+        datalist.write('Number of scans in HT3 (excluding dummies): '+str(len(rnn_HpredsT3_padArray)-dummyCountHT3)+'\n') 
+        datalist.write('Number of scans in AT1 (excluding dummies): '+str(len(rnn_ApredsT1_padArray)-dummyCountAT1)+'\n')
+        datalist.write('Number of scans in AT2 (excluding dummies): '+str(len(rnn_ApredsT2_padArray)-dummyCountAT2)+'\n')
+        datalist.write('Number of scans in AT3 (excluding dummies): '+str(len(rnn_ApredsT3_padArray)-dummyCountAT3)+'\n') 
+            
+#Split RNN data into train/val/test        
+    train_predsT1_padArray,train_predsT2_padArray,train_predsT3_padArray,val_predsT1_padArray,val_predsT2_padArray,val_predsT3_padArray,test_predsT1_padArray,test_predsT2_padArray,test_predsT3_padArray, train_labels_padArray,val_labels_padArray,test_labels_padArray, test_ptidT1,test_ptidT2,test_ptidT3,test_imageIDT1,test_imageIDT2,test_imageIDT3 = data_loader.split_data_RNN(rnn_HpredsT1_padArray,rnn_HpredsT2_padArray,rnn_HpredsT3_padArray,rnn_ApredsT1_padArray,rnn_ApredsT2_padArray,rnn_ApredsT3_padArray,rnn_HptidT1_padded,rnn_HptidT2_padded,rnn_HptidT3_padded,rnn_HimageIDT1_padded,rnn_HimageIDT2_padded,rnn_HimageIDT3_padded,rnn_AptidT1_padded,rnn_AptidT2_padded,rnn_AptidT3_padded,rnn_AimageIDT1_padded,rnn_AimageIDT2_padded,rnn_AimageIDT3_padded,val_split)
     
 #PLOTS FOR THE CNN ALONE    
     #plot accuracy learning curves
@@ -226,7 +702,6 @@ def evaluate_net (seed):
     
 #TEST SET TABLES
     test_table_CNN = (test_data[4],test_data[5],test_data[3],test_data[6],test_data[7],test_predsCNN_class,test_predsCNN[0],test_predsCNN[1])
-    test_table_RNN = (test_ptidT1,test_imageIDT1,test_imageIDT2,test_imageIDT3,test_labels_padArray,test_predsRNN_class,test_predsRNN[0],test_predsRNN[1])
     
 #WRITE THE OUTPUT FILE    
     with open(model_filepath+'/figures/Outputs'+str(seed)+'.txt','w') as outputs:
@@ -254,8 +729,8 @@ def evaluate_net (seed):
         #Testset output tables
         outputs.write('test_table_CNN'+'\n')
         outputs.write(str(test_table_CNN)+'\n'+'\n')
-        outputs.write('test_table_RNN'+'\n')
-        outputs.write(str(test_table_RNN)+'\n'+'\n')
+        #outputs.write('test_table_RNN'+'\n')
+        #outputs.write(str(test_table_RNN)+'\n'+'\n')
 
 #TEST SET TABLES
     Cptid = test_data[4]
@@ -278,11 +753,11 @@ def evaluate_net (seed):
     test_imageIDT2 = np.insert(test_imageIDT2,0,'imIDT2')
     test_imageIDT3 = np.insert(test_imageIDT3,0,'imIDT3')
     test_labels_padArray = np.insert(test_labels_padArray.astype(str),0,'label')
-    test_predsRNN_class = np.insert(test_predsRNN_class.astype(str),0,'prediction')
-    probsRAD = [item[0] for item in test_predsRNN]
-    probsRNC = [item[1] for item in test_predsRNN]
-    probsRAD.insert(0,'prediction probabilities AD')
-    probsRNC.insert(0,'prediction probabilities NC')
+    #test_predsRNN_class = np.insert(test_predsRNN_class.astype(str),0,'prediction')
+    #probsRAD = [item[0] for item in test_predsRNN]
+    #probsRNC = [item[1] for item in test_predsRNN]
+    #probsRAD.insert(0,'prediction probabilities AD')
+    #probsRNC.insert(0,'prediction probabilities NC')
 
     with open(model_filepath+'/figures/test_table_'+str(seed)+'.csv','w') as Testcsv:
         Testcsv_writer = csv.writer(Testcsv, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
