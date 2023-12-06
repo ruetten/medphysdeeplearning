@@ -188,10 +188,10 @@ if __name__ == '__main__':
         patch_size = 5,
         num_classes = 2,
         channels = 1,
-        dim = 256,
+        dim = 32,
         depth = 6,
         heads = 8,
-        mlp_dim = 1024,
+        mlp_dim = 128,
         dropout = 0.1,
         emb_dropout = 0.1
     )
