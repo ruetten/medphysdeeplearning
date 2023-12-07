@@ -59,7 +59,7 @@ mri_datapath = '//data/data_wnx3/data_wnx1/_Data/AlzheimersDL/CNN+RNN-2class-1cn
 
 params_dict = { 'CNN_w_regularizer': CNN_w_regularizer,
                'CNN_batch_size': CNN_batch_size,
-               'CNN_drop_rate': CNN_drop_rate, 'epochs': 2,
+               'CNN_drop_rate': CNN_drop_rate, 'epochs': 64,
           'gpu': "/gpu:0", 'model_filepath': model_filepath, 
           'image_shape': (target_rows, target_cols, depth, axis),
           'num_clinical': num_clinical,
@@ -127,19 +127,6 @@ def evaluate_net (seed):
     rnn_AimageIDT1 = rnn_AdataT1[5]
     rnn_AimageIDT2 = rnn_AdataT2[5]
     rnn_AimageIDT3 = rnn_AdataT3[5]
-    
-    for i in range(len(rnn_HpredsT1)):
-        print(0, rnn_HpredsT1[i], rnn_HptidT1[i], rnn_HimageIDT1[i])
-    for i in range(len(rnn_HpredsT2)):
-        print(0, rnn_HpredsT2[i], rnn_HptidT2[i], rnn_HimageIDT2[i])
-    for i in range(len(rnn_HpredsT3)):
-        print(0, rnn_HpredsT3[i], rnn_HptidT3[i], rnn_HimageIDT3[i])
-    for i in range(len(rnn_ApredsT1)):
-        print(1, rnn_ApredsT1[i], rnn_AptidT1[i], rnn_AimageIDT1[i])
-    for i in range(len(rnn_ApredsT2)):
-        print(1, rnn_ApredsT2[i], rnn_AptidT2[i], rnn_AimageIDT2[i])
-    for i in range(len(rnn_ApredsT3)):
-        print(1, rnn_ApredsT3[i], rnn_AptidT3[i], rnn_AimageIDT3[i])
           
     # Define the CSV file name
     csv_file_name = "predictions.csv"
