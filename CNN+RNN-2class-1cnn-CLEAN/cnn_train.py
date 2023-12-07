@@ -53,13 +53,13 @@ val_split = 0.2
 optimizer = Adam(lr=1e-5)
 final_layer_size = 5
 
-model_filepath = '//data/data_wnx3/data_wnx1/_Data/AlzheimersDL/CNN+RNN-2class-1cnn-CLEAN'
+model_filepath = '//export/home/lruetten/Documents/medphys_deep_learning/CNN+RNN-2class-1cnn-CLEAN'
 mri_datapath = '//data/data_wnx3/data_wnx1/_Data/AlzheimersDL/CNN+RNN-2class-1cnn-CLEAN/ADNI_volumes_customtemplate_float32'
 
 
 params_dict = { 'CNN_w_regularizer': CNN_w_regularizer,
                'CNN_batch_size': CNN_batch_size,
-               'CNN_drop_rate': CNN_drop_rate, 'epochs': 50,
+               'CNN_drop_rate': CNN_drop_rate, 'epochs': 2,
           'gpu': "/gpu:0", 'model_filepath': model_filepath, 
           'image_shape': (target_rows, target_cols, depth, axis),
           'num_clinical': num_clinical,
@@ -127,19 +127,20 @@ def evaluate_net (seed):
     rnn_AimageIDT1 = rnn_AdataT1[5]
     rnn_AimageIDT2 = rnn_AdataT2[5]
     rnn_AimageIDT3 = rnn_AdataT3[5]
-
-    # Combine the data for each class
-    data_Hpreds = [(0, rnn_HpredsT1, rnn_HptidT1, rnn_HimageIDT1),
-                   (0, rnn_HpredsT2, rnn_HptidT2, rnn_HimageIDT2),
-                   (0, rnn_HpredsT3, rnn_HptidT3, rnn_HimageIDT3)]
     
-    data_Apreds = [(1, rnn_ApredsT1, rnn_AptidT1, rnn_AimageIDT1),
-                   (1, rnn_ApredsT2, rnn_AptidT2, rnn_AimageIDT2),
-                   (1, rnn_ApredsT3, rnn_AptidT3, rnn_AimageIDT3)]
-    
-    # Combine the data for both classes
-    all_data = data_Hpreds + data_Apreds
-    
+    for i in range(len(rnn_HpredsT1)):
+        print(0, rnn_HpredsT1[i], rnn_HptidT1[i], rnn_HimageIDT1[i])
+    for i in range(len(rnn_HpredsT2)):
+        print(0, rnn_HpredsT2[i], rnn_HptidT2[i], rnn_HimageIDT2[i])
+    for i in range(len(rnn_HpredsT3)):
+        print(0, rnn_HpredsT3[i], rnn_HptidT3[i], rnn_HimageIDT3[i])
+    for i in range(len(rnn_ApredsT1)):
+        print(1, rnn_ApredsT1[i], rnn_AptidT1[i], rnn_AimageIDT1[i])
+    for i in range(len(rnn_ApredsT2)):
+        print(1, rnn_ApredsT2[i], rnn_AptidT2[i], rnn_AimageIDT2[i])
+    for i in range(len(rnn_ApredsT3)):
+        print(1, rnn_ApredsT3[i], rnn_AptidT3[i], rnn_AimageIDT3[i])
+          
     # Define the CSV file name
     csv_file_name = "predictions.csv"
     
@@ -150,14 +151,24 @@ def evaluate_net (seed):
         # Write header
         csv_writer.writerow(['Class', 'Predictions', 'PTIDs', 'ImageIDs'])
     
-        # Write data rows
-        for row in all_data:
-            class_label, predictions, ptids, imageids = row
-            predictions_str = np.array2string(predictions, precision=6, separator=', ', suppress_small=True)
-            csv_writer.writerow([class_label, predictions_str, ptids, imageids])
+        for i in range(len(rnn_HpredsT1)):
+            csv_writer.writerow([0, rnn_HpredsT1[i], rnn_HptidT1[i], rnn_HimageIDT1[i]])
+        for i in range(len(rnn_HpredsT2)):
+            csv_writer.writerow([0, rnn_HpredsT2[i], rnn_HptidT2[i], rnn_HimageIDT2[i]])
+        for i in range(len(rnn_HpredsT3)):
+            csv_writer.writerow([0, rnn_HpredsT3[i], rnn_HptidT3[i], rnn_HimageIDT3[i]])
+        for i in range(len(rnn_ApredsT1)):
+            csv_writer.writerow([1, rnn_ApredsT1[i], rnn_AptidT1[i], rnn_AimageIDT1[i]])
+        for i in range(len(rnn_ApredsT2)):
+            csv_writer.writerow([1, rnn_ApredsT2[i], rnn_AptidT2[i], rnn_AimageIDT2[i]])
+        for i in range(len(rnn_ApredsT3)):
+            csv_writer.writerow([1, rnn_ApredsT3[i], rnn_AptidT3[i], rnn_AimageIDT3[i]])
+
     
     print(f"CSV file '{csv_file_name}' has been created.")
     
+    
+        
 #add dummy feature vectors to all missing timepoints
     dummyVector = np.full((final_layer_size),-1)
 
