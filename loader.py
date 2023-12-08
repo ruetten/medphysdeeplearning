@@ -155,9 +155,6 @@ def parseDataOne(data, indices):
         print("parseDataOne(): Indices is of incorrect length", file=sys.stderr)
         return None
 
-    # Find time delta using initial exam dates. Time in milliseconds
-    delta = max(data["examdate"]) - min(data["examdate"])
-
     listOfTensors = []
 
     # For each image id, load the data into the tensor
@@ -208,9 +205,6 @@ def parseTimestampOne(data, indices):
     if len(indices) != 3:
         print("parseDataOne(): Indices is of incorrect length", file=sys.stderr)
         return None
-
-    # Find time delta using initial exam dates. Time in milliseconds
-    delta = max(data["examdate"]) - min(data["examdate"])
 
     listOfDates = []
     firstDate = min(data["examdate"])
