@@ -109,7 +109,7 @@ def parseData(ptid, fields):
     # print(len(listOfTriplets))
     return listOfTriplets
 
-# Analogous to parseData(), but sublists contain timestamps (in days) instead of tensors
+# Analogous to parseData(), but sublists contain timestamps (in days since first scan) instead of tensors
 def parseTimestamps(ptid, fields):
 
     data = {"ids": [], "count": 0, "examdate": []}
@@ -150,6 +150,7 @@ def parseDataOne(data, indices):
 
     if data == None or data["ids"] == None or data["examdate"] == None or data["count"] < 3:
         print("parseDataOne(): Poorly formatted data", file=sys.stderr)
+        return None
 
     if len(indices) != 3:
         print("parseDataOne(): Indices is of incorrect length", file=sys.stderr)
@@ -196,11 +197,12 @@ def parseDataOne(data, indices):
     # For debugging
     # print(tensor.shape)
 
-# Analogous to parseDataOne(), loads timestamp (in days) instead of image data    
+# Analogous to parseDataOne(), loads timestamp (in days since first scan) instead of image data    
 def parseTimestampOne(data, indices):
 
     if data == None or data["ids"] == None or data["examdate"] == None or data["count"] < 3:
         print("parseDataOne(): Poorly formatted data", file=sys.stderr)
+        return None
 
     if len(indices) != 3:
         print("parseDataOne(): Indices is of incorrect length", file=sys.stderr)
@@ -212,7 +214,6 @@ def parseTimestampOne(data, indices):
     SEC_TO_HR = 3600
     HR_TO_DAY = 24
 
-    # For each image id, load the data into the tensor
     for i in range(3):
         cur_id = indices[i]
 
@@ -224,7 +225,7 @@ def parseTimestampOne(data, indices):
 
         deltaDays = delta / SEC_TO_HR / HR_TO_DAY
 
-        # Append the image data tensor to the list
+        # Append the timestamp to the list
         listOfDates.append(int(deltaDays))
 
     # For debugging
