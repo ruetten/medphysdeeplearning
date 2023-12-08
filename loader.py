@@ -4,6 +4,7 @@ import numpy as np
 import nibabel as nib
 import re
 import os.path
+import sys
 
 # NOTICE: This only works if the patient is either AD or CN. Anything else breaks.
 
@@ -19,7 +20,7 @@ def convertDate(formattedDate):
         return (dt.strptime(formattedDate, p2) - epoch).total_seconds()
 
 # Return a dictionary with image ids for each patient id
-def init():
+def getData():
 
     rows = []
     with open("LP_ADNIMERGE.csv", newline='') as csvfile:
@@ -34,7 +35,7 @@ def init():
     # Sort by patient ID       
     rows.sort(key=lambda e: e[2])
 
-    counts = {'0': {"ids": [], "count": 0, "examdate": []}}
+    fields = {'0': {"ids": [], "count": 0, "examdate": []}}
     cur_id = '0'
     count = 0
     ones_ad = 0
@@ -48,40 +49,85 @@ def init():
                     ones_ad += 1
                 else:
                     ones_cn += 1
-            counts[cur_id]["count"] = count
+            fields[cur_id]["count"] = count
 
             # Initialize variables for next Patient ID
             count = 1
             cur_id = row[2]
-            counts[cur_id] = {"ids": [row[3]], "count": 0, "examdate": [convertDate(row[4])]}
+            fields[cur_id] = {"ids": [row[3]], "count": 0, "examdate": [convertDate(row[4])]}
 
         else:
             count += 1
-            counts[cur_id]["ids"].append(row[3])
-            counts[cur_id]["examdate"].append(convertDate(row[4]))
+            fields[cur_id]["ids"].append(row[3])
+            fields[cur_id]["examdate"].append(convertDate(row[4]))
 
-    print("AD: %d \nCN: %d" % (ones_ad, ones_cn))
-    return counts
+    # Debugging
+    # print("AD: %d \nCN: %d" % (ones_ad, ones_cn))
+    return fields
 
-# Load a tensor with all the image data for the provided patient id
-def parseData(ptid):
-    ptids = init()
+# Load a list with all the image data for the provided patient id. Group images into sets of 3. Return NONE if no set of 3 exists
+def parseData(ptid, fields):
 
-    data = ptids[ptid]
-    print(data)
+    # Number of consecutive images to group together in a list
+    NGRAMS = 3
+
+    data = {"ids": [], "count": 0, "examdate": []}
+    try:
+        data = fields[ptid]
+    except:
+        print("parseData(): Invalid PTID", file=sys.stderr)
+        return None
+    
+    # Debugging
+    # print(data)
+
+    # Assert that there are 3 images in the image ID list
+    if data["count"] < 3:
+        print("parsedata(): Less than 3 images in source", file=sys.stderr)
+        return None
 
     # Find time delta using initial exam dates. Time in milliseconds
     delta = max(data["examdate"]) - min(data["examdate"])
-    print(delta)
+    # print(delta)
+    
+    listOfTriplets = []
 
-    # Initialize tensor with appropriate dimensions, and channels for each scan
-    # NOTE: Samarth said that the first dimension should be the channel count
-    tensor = np.zeros([data["count"], 91, 109, 91])
+    # For each set of NGRAMS (default is 3)
+    for i in range(int(data["count"] - NGRAMS + 1)):
+        indices = [i, i+1, i+2]
+
+        # Load up the tensor with numerical data now that we have an image
+        listOfTriplets.append(parseDataOne(data, indices))
+
+    # For debugging
+    # print(len(listOfTriplets))
+    return listOfTriplets
+
+###
+# data: The image ids, dates, and things like that fora given PTID
+# indices: Which set of 3 images to include in the final list
+# RETURNS: a list of 3 tensors, each with NIFTI image data
+###
+def parseDataOne(data, indices):
+
+    if data == None or data["ids"] == None or data["examdate"] == None or data["count"] < 3:
+        print("parseDataOne(): Poorly formatted data", file=sys.stderr)
+
+    if len(indices) != 3:
+        print("parseDataOne(): Indices is of incorrect length", file=sys.stderr)
+        return None
+
+    # Find time delta using initial exam dates. Time in milliseconds
+    delta = max(data["examdate"]) - min(data["examdate"])
+
+    listOfTensors = []
 
     # For each image id, load the data into the tensor
-    for i in range(data["count"]):
-        img_id = data["ids"][i]
-        print(data["dates"][i])
+    for i in range(3):
+        cur_id = indices[i]
+
+        img_id = data["ids"][cur_id]
+        # print(data["examdate"][cur_id])
         
         # Variables help keep the lines somewhat condensed
         ad_dir = "AD_FDGPET_preprocessed"
@@ -104,17 +150,20 @@ def parseData(ptid):
 
         # If a file is not found, show an error and skip
         else:
-            print("NIFTI image with", i, "ID (", img_id, ") not found")
+            print("parseDataOne(): NIFTI image with ID (", img_id, ") not found", file=sys.stderr)
             continue
 
-        # Load up the tensor with numerical data now that we have an image
-        tensor[i, :, :, :] = img.get_fdata()
+        # Append the image data tensor to the list
+        listOfTensors.append(img.get_fdata())
 
-        # Possibly return?
-        # return tensor
+    return listOfTensors
 
     # For debugging
-    print(tensor.shape)
+    # print(tensor.shape)
     
 # Doesn't have to be a text input, here just for example
-parseData(input("PTID from CSV: "))
+the_ptid = input("(loader.py) PTID from CSV: ")
+the_fields = getData()
+
+the_result = parseData(the_ptid, the_fields)
+print(len(the_result[0]))
