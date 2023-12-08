@@ -7,8 +7,12 @@ import os.path
 import sys
 
 # NOTICE: This only works if the patient is either AD or CN. Anything else breaks.
+# You'll probably only need to call parseData() and parseTimestamps()
 
-# Convert a formatted date (MM/DD/YYYY or DD-MM-YYYY) to milliseconds since Jan 1, 1970
+# Number of consecutive images to group together in a list
+NGRAMS = 3
+
+# Convert a formatted date (MM/DD/YYYY or DD-MM-YYYY) to seconds since Jan 1, 1970
 def convertDate(formattedDate):
     p1 = "%m/%d/%Y"
     p2 = "%d-%m-%Y"
@@ -65,11 +69,13 @@ def getData():
     # print("AD: %d \nCN: %d" % (ones_ad, ones_cn))
     return fields
 
-# Load a list with all the image data for the provided patient id. Group images into sets of 3. Return NONE if no set of 3 exists
+###
+# Load a list with all the image data for the provided patient id.
+# ptid: string. The patient ID
+# fields: List of dictionaries. You would get this by running getData()
+# RETURNS: A List of Lists, where each sublist is of length 3 and contains the NIFTI data as a tensor of floats
+###
 def parseData(ptid, fields):
-
-    # Number of consecutive images to group together in a list
-    NGRAMS = 3
 
     data = {"ids": [], "count": 0, "examdate": []}
     try:
@@ -87,7 +93,7 @@ def parseData(ptid, fields):
         return None
 
     # Find time delta using initial exam dates. Time in milliseconds
-    delta = max(data["examdate"]) - min(data["examdate"])
+    # delta = max(data["examdate"]) - min(data["examdate"])
     # print(delta)
     
     listOfTriplets = []
@@ -103,10 +109,42 @@ def parseData(ptid, fields):
     # print(len(listOfTriplets))
     return listOfTriplets
 
+# Analogous to parseData(), but sublists contain timestamps (in days) instead of tensors
+def parseTimestamps(ptid, fields):
+
+    data = {"ids": [], "count": 0, "examdate": []}
+    try:
+        data = fields[ptid]
+    except:
+        print("parseData(): Invalid PTID", file=sys.stderr)
+        return None
+    
+    # Debugging
+    # print(data)
+
+    # Assert that there are 3 images in the image ID list
+    if data["count"] < 3:
+        print("parsedata(): Less than 3 images in source", file=sys.stderr)
+        return None
+
+    listOfTriplets = []
+
+    # For each set of NGRAMS (default is 3)
+    for i in range(int(data["count"] - NGRAMS + 1)):
+        indices = [i, i+1, i+2]
+
+        # Load up the list with the timestamps
+        listOfTriplets.append(parseTimestampOne(data, indices))
+
+    # For debugging
+    # print(len(listOfTriplets))
+    return listOfTriplets
+
 ###
-# data: The image ids, dates, and things like that fora given PTID
-# indices: Which set of 3 images to include in the final list
-# RETURNS: a list of 3 tensors, each with NIFTI image data
+# Get the list of tensors given a dictionary with all relevant images and which images to use
+# data: The image ids, dates, and things like that for a given PTID
+# indices: Which set of 3 images to include in the list
+# RETURNS: a List of 3 tensors, each with NIFTI image data as floats
 ###
 def parseDataOne(data, indices):
 
@@ -160,10 +198,50 @@ def parseDataOne(data, indices):
 
     # For debugging
     # print(tensor.shape)
-    
-# Doesn't have to be a text input, here just for example
-the_ptid = input("(loader.py) PTID from CSV: ")
-the_fields = getData()
 
-the_result = parseData(the_ptid, the_fields)
-print(len(the_result[0]))
+# Analogous to parseDataOne(), loads timestamp (in days) instead of image data    
+def parseTimestampOne(data, indices):
+
+    if data == None or data["ids"] == None or data["examdate"] == None or data["count"] < 3:
+        print("parseDataOne(): Poorly formatted data", file=sys.stderr)
+
+    if len(indices) != 3:
+        print("parseDataOne(): Indices is of incorrect length", file=sys.stderr)
+        return None
+
+    # Find time delta using initial exam dates. Time in milliseconds
+    delta = max(data["examdate"]) - min(data["examdate"])
+
+    listOfDates = []
+    firstDate = min(data["examdate"])
+
+    SEC_TO_HR = 3600
+    HR_TO_DAY = 24
+
+    # For each image id, load the data into the tensor
+    for i in range(3):
+        cur_id = indices[i]
+
+        delta = data["examdate"][cur_id] - firstDate
+
+        # Error if the time delta is negative, inlude in list anyways
+        if delta < 0:
+            print("Negative time difference encountered for image %d" % data["ids"][cur_id], file=sys.stderr)
+
+        deltaDays = delta / SEC_TO_HR / HR_TO_DAY
+
+        # Append the image data tensor to the list
+        listOfDates.append(int(deltaDays))
+
+    # For debugging
+    # print(listOfDates)
+ 
+    return listOfDates
+
+    
+# Entry point code here just for debugging
+# the_ptid = input("(loader.py) PTID from CSV: ")
+# the_fields = getData()
+
+# the_result = parseTimestamps(the_ptid, the_fields)
+# print(len(the_result[0]))
