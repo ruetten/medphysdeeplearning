@@ -53,8 +53,8 @@ class CNN_Net ():
         xalex3D = XAlex3D(w_regularizer = self.params.CNN_w_regularizer, drop_rate = self.params.CNN_drop_rate, final_layer_size=self.params.final_layer_size)
     
         with tf.device(self.params.gpu):
-            self.fc_CNN = xalex3D (self.mri, self.jac, self.xls) 
-            self.CNNoutput_class = Dense(units = 2, activation = 'softmax', name = 'CNNclass_output') (self.fc_CNN)  #use either 1, sigmoid, binarycrossent OR 2, softmax, sparsecategoricalcrossent
+            self.fc_CNN, fc2 = xalex3D (self.mri, self.jac, self.xls) 
+            self.CNNoutput_class = Dense(units = 2, activation = 'softmax', name = 'CNNclass_output') (fc2)  #use either 1, sigmoid, binarycrossent OR 2, softmax, sparsecategoricalcrossent
         
     def train (self, data):
         train_data, val_data = data
@@ -344,7 +344,7 @@ def XAlex3D(w_regularizer = None, drop_rate = 0., final_layer_size = 50) :
 
         #fc2 = _fc_bn_relu_drop (final_layer_size, w_regularizer, drop_rate = drop_rate) (flat)  #this was the orginal final layer
 
-        return fc2
+        return flat, fc2
     return f
 
 ###Define pieces of CNN

@@ -1,0 +1,288 @@
+[200~
+__________________________________________________________________________________________________
+Layer (type)                    Output Shape         Param #     Connected to
+==================================================================================================
+input_mri (InputLayer)          (None, 91, 109, 91,  0
+__________________________________________________________________________________________________
+conv3d_1 (Conv3D)               (None, 23, 28, 23, 1 302208      input_mri[0][0]
+__________________________________________________________________________________________________
+batch_normalization_1 (BatchNor (None, 23, 28, 23, 1 768         conv3d_1[0][0]
+__________________________________________________________________________________________________
+elu_1 (ELU)                     (None, 23, 28, 23, 1 0           batch_normalization_1[0][0]
+__________________________________________________________________________________________________
+max_pooling3d_1 (MaxPooling3D)  (None, 12, 14, 12, 1 0           elu_1[0][0]
+__________________________________________________________________________________________________
+dropout_1 (Dropout)             (None, 12, 14, 12, 1 0           max_pooling3d_1[0][0]
+__________________________________________________________________________________________________
+conv3d_2 (Conv3D)               (None, 12, 14, 12, 3 11059584    dropout_1[0][0]
+__________________________________________________________________________________________________
+batch_normalization_2 (BatchNor (None, 12, 14, 12, 3 1536        conv3d_2[0][0]
+__________________________________________________________________________________________________
+elu_2 (ELU)                     (None, 12, 14, 12, 3 0           batch_normalization_2[0][0]
+__________________________________________________________________________________________________
+max_pooling3d_2 (MaxPooling3D)  (None, 6, 7, 6, 384) 0           elu_2[0][0]
+__________________________________________________________________________________________________
+dropout_2 (Dropout)             (None, 6, 7, 6, 384) 0           max_pooling3d_2[0][0]
+__________________________________________________________________________________________________
+separable_conv3d_1 (SeparableCo (None, 6, 7, 6, 384) 158208      dropout_2[0][0]
+__________________________________________________________________________________________________
+batch_normalization_3 (BatchNor (None, 6, 7, 6, 384) 1536        separable_conv3d_1[0][0]
+__________________________________________________________________________________________________
+elu_3 (ELU)                     (None, 6, 7, 6, 384) 0           batch_normalization_3[0][0]
+__________________________________________________________________________________________________
+dropout_3 (Dropout)             (None, 6, 7, 6, 384) 0           elu_3[0][0]
+__________________________________________________________________________________________________
+separable_conv3d_2 (SeparableCo (None, 6, 7, 6, 384) 158208      dropout_3[0][0]
+__________________________________________________________________________________________________
+batch_normalization_4 (BatchNor (None, 6, 7, 6, 384) 1536        separable_conv3d_2[0][0]
+__________________________________________________________________________________________________
+elu_4 (ELU)                     (None, 6, 7, 6, 384) 0           batch_normalization_4[0][0]
+__________________________________________________________________________________________________
+dropout_4 (Dropout)             (None, 6, 7, 6, 384) 0           elu_4[0][0]
+__________________________________________________________________________________________________
+separable_conv3d_3 (SeparableCo (None, 6, 7, 6, 384) 158208      dropout_4[0][0]
+__________________________________________________________________________________________________
+batch_normalization_5 (BatchNor (None, 6, 7, 6, 384) 1536        separable_conv3d_3[0][0]
+__________________________________________________________________________________________________
+elu_5 (ELU)                     (None, 6, 7, 6, 384) 0           batch_normalization_5[0][0]
+__________________________________________________________________________________________________
+dropout_5 (Dropout)             (None, 6, 7, 6, 384) 0           elu_5[0][0]
+__________________________________________________________________________________________________
+add_1 (Add)                     (None, 6, 7, 6, 384) 0           dropout_5[0][0]
+                                                                 dropout_2[0][0]
+__________________________________________________________________________________________________
+elu_6 (ELU)                     (None, 6, 7, 6, 384) 0           add_1[0][0]
+__________________________________________________________________________________________________
+lambda_1 (Lambda)               (None, 6, 7, 6, 192) 0           elu_6[0][0]
+__________________________________________________________________________________________________
+lambda_2 (Lambda)               (None, 6, 7, 6, 192) 0           elu_6[0][0]
+__________________________________________________________________________________________________
+conv3d_3 (Conv3D)               (None, 6, 7, 6, 96)  663648      lambda_1[0][0]
+__________________________________________________________________________________________________
+conv3d_4 (Conv3D)               (None, 6, 7, 6, 96)  663648      lambda_2[0][0]
+__________________________________________________________________________________________________
+batch_normalization_6 (BatchNor (None, 6, 7, 6, 96)  384         conv3d_3[0][0]
+__________________________________________________________________________________________________
+batch_normalization_7 (BatchNor (None, 6, 7, 6, 96)  384         conv3d_4[0][0]
+__________________________________________________________________________________________________
+elu_7 (ELU)                     (None, 6, 7, 6, 96)  0           batch_normalization_6[0][0]
+__________________________________________________________________________________________________
+elu_8 (ELU)                     (None, 6, 7, 6, 96)  0           batch_normalization_7[0][0]
+__________________________________________________________________________________________________
+max_pooling3d_3 (MaxPooling3D)  (None, 3, 4, 3, 96)  0           elu_7[0][0]
+__________________________________________________________________________________________________
+max_pooling3d_4 (MaxPooling3D)  (None, 3, 4, 3, 96)  0           elu_8[0][0]
+__________________________________________________________________________________________________
+dropout_6 (Dropout)             (None, 3, 4, 3, 96)  0           max_pooling3d_3[0][0]
+__________________________________________________________________________________________________
+dropout_7 (Dropout)             (None, 3, 4, 3, 96)  0           max_pooling3d_4[0][0]
+__________________________________________________________________________________________________
+conv3d_5 (Conv3D)               (None, 3, 4, 3, 48)  165936      dropout_6[0][0]
+__________________________________________________________________________________________________
+conv3d_6 (Conv3D)               (None, 3, 4, 3, 48)  165936      dropout_7[0][0]
+__________________________________________________________________________________________________
+batch_normalization_8 (BatchNor (None, 3, 4, 3, 48)  192         conv3d_5[0][0]
+__________________________________________________________________________________________________
+batch_normalization_9 (BatchNor (None, 3, 4, 3, 48)  192         conv3d_6[0][0]
+__________________________________________________________________________________________________
+elu_9 (ELU)                     (None, 3, 4, 3, 48)  0           batch_normalization_8[0][0]
+__________________________________________________________________________________________________
+elu_10 (ELU)                    (None, 3, 4, 3, 48)  0           batch_normalization_9[0][0]
+__________________________________________________________________________________________________
+input_xls (InputLayer)          (None, 2)            0
+__________________________________________________________________________________________________
+max_pooling3d_5 (MaxPooling3D)  (None, 2, 2, 2, 48)  0           elu_9[0][0]
+__________________________________________________________________________________________________
+max_pooling3d_6 (MaxPooling3D)  (None, 2, 2, 2, 48)  0           elu_10[0][0]
+__________________________________________________________________________________________________
+dense_1 (Dense)                 (None, 64)           192         input_xls[0][0]
+__________________________________________________________________________________________________
+dropout_8 (Dropout)             (None, 2, 2, 2, 48)  0           max_pooling3d_5[0][0]
+__________________________________________________________________________________________________
+dropout_9 (Dropout)             (None, 2, 2, 2, 48)  0           max_pooling3d_6[0][0]
+__________________________________________________________________________________________________
+batch_normalization_10 (BatchNo (None, 64)           256         dense_1[0][0]
+__________________________________________________________________________________________________
+concatenate_1 (Concatenate)     (None, 2, 2, 2, 96)  0           dropout_8[0][0]
+                                                                 dropout_9[0][0]
+__________________________________________________________________________________________________
+elu_11 (ELU)                    (None, 64)           0           batch_normalization_10[0][0]
+__________________________________________________________________________________________________
+reshape_1 (Reshape)             (None, 768)          0           concatenate_1[0][0]
+__________________________________________________________________________________________________
+dropout_10 (Dropout)            (None, 64)           0           elu_11[0][0]
+__________________________________________________________________________________________________
+final_conv (Dense)              (None, 20)           15380       reshape_1[0][0]
+__________________________________________________________________________________________________
+dense_2 (Dense)                 (None, 20)           1300        dropout_10[0][0]
+__________________________________________________________________________________________________
+batch_normalization_12 (BatchNo (None, 20)           80          final_conv[0][0]
+__________________________________________________________________________________________________
+batch_normalization_11 (BatchNo (None, 20)           80          dense_2[0][0]
+__________________________________________________________________________________________________
+elu_13 (ELU)                    (None, 20)           0           batch_normalization_12[0][0]
+__________________________________________________________________________________________________
+elu_12 (ELU)                    (None, 20)           0           batch_normalization_11[0][0]
+__________________________________________________________________________________________________
+dropout_12 (Dropout)            (None, 20)           0           elu_13[0][0]
+__________________________________________________________________________________________________
+dropout_11 (Dropout)            (None, 20)           0           elu_12[0][0]
+__________________________________________________________________________________________________
+concatenate_2 (Concatenate)     (None, 40)           0           dropout_12[0][0]
+                                                                 dropout_11[0][0]
+__________________________________________________________________________________________________
+features (Dense)                (None, 40)           1640        concatenate_2[0][0]
+__________________________________________________________________________________________________
+CNNclass_output (Dense)         (None, 2)            82          features[0][0]
+==================================================================================================
+Total params: 13,522,658
+Trainable params: 13,518,418
+Non-trainable params: 4,240
+__________________________________________________________________________________________________
+WARNING:tensorflow:From /data/users/anaconda3/envs/tf-gpu-cuda10/lib/python3.6/site-packages/tensorflow_core/python/ops/math_grad.py:1424: where (from tensorflow.python.ops.array_ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Use tf.where in 2.0, which has the same broadcast rule as np.where
+WARNING:tensorflow:From /data/users/anaconda3/envs/tf-gpu-cuda10/lib/python3.6/site-packages/keras/backend/tensorflow_backend.py:986: The name tf.assign_add is deprecated. Please use tf.compat.v1.assign_add instead.
+
+WARNING:tensorflow:From /data/users/anaconda3/envs/tf-gpu-cuda10/lib/python3.6/site-packages/keras/backend/tensorflow_backend.py:973: The name tf.assign is deprecated. Please use tf.compat.v1.assign instead.
+
+WARNING:tensorflow:From /data/users/anaconda3/envs/tf-gpu-cuda10/lib/python3.6/site-packages/keras/backend/tensorflow_backend.py:2741: The name tf.Session is deprecated. Please use tf.compat.v1.Session instead.
+
+Epoch 1/50
+WARNING:tensorflow:From /data/users/anaconda3/envs/tf-gpu-cuda10/lib/python3.6/site-packages/keras/backend/tensorflow_backend.py:174: The name tf.get_default_session is deprecated. Please use tf.compat.v1.get_default_session instead.
+
+WARNING:tensorflow:From /data/users/anaconda3/envs/tf-gpu-cuda10/lib/python3.6/site-packages/keras/backend/tensorflow_backend.py:181: The name tf.ConfigProto is deprecated. Please use tf.compat.v1.ConfigProto instead.
+
+2023-12-11 11:46:15.472280: I tensorflow/core/platform/cpu_feature_guard.cc:142] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 AVX512F FMA
+2023-12-11 11:46:15.506899: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 3799900000 Hz
+2023-12-11 11:46:15.509070: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x562ac87d2720 initialized for platform Host (this does not guarantee that XLA will be used). Devices:
+2023-12-11 11:46:15.509120: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): Host, Default Version
+2023-12-11 11:46:15.515066: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcuda.so.1
+2023-12-11 11:46:15.553672: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1618] Found device 0 with properties:
+name: NVIDIA TITAN RTX major: 7 minor: 5 memoryClockRate(GHz): 1.77
+pciBusID: 0000:65:00.0
+2023-12-11 11:46:15.554663: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudart.so.10.0
+2023-12-11 11:46:15.556656: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcublas.so.10.0
+2023-12-11 11:46:15.558418: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcufft.so.10.0
+2023-12-11 11:46:15.559307: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcurand.so.10.0
+2023-12-11 11:46:15.561400: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusolver.so.10.0
+2023-12-11 11:46:15.563268: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcusparse.so.10.0
+2023-12-11 11:46:15.567672: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudnn.so.7
+2023-12-11 11:46:15.569134: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1746] Adding visible gpu devices: 0
+2023-12-11 11:46:15.569184: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudart.so.10.0
+2023-12-11 11:46:15.663139: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1159] Device interconnect StreamExecutor with strength 1 edge matrix:
+2023-12-11 11:46:15.663172: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1165]      0
+2023-12-11 11:46:15.663182: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1178] 0:   N
+2023-12-11 11:46:15.665317: I tensorflow/core/common_runtime/gpu/gpu_device.cc:1304] Created TensorFlow device (/job:localhost/replica:0/task:0/device:GPU:0 with 22792 MB memory) -> physical GPU (device: 0, name: NVIDIA TITAN RTX, pci bus id: 0000:65:00.0, compute capability: 7.5)
+2023-12-11 11:46:15.667928: I tensorflow/compiler/xla/service/service.cc:168] XLA service 0x562ac94ffea0 initialized for platform CUDA (this does not guarantee that XLA will be used). Devices:
+2023-12-11 11:46:15.667951: I tensorflow/compiler/xla/service/service.cc:176]   StreamExecutor device (0): NVIDIA TITAN RTX, Compute Capability 7.5
+WARNING:tensorflow:From /data/users/anaconda3/envs/tf-gpu-cuda10/lib/python3.6/site-packages/keras/backend/tensorflow_backend.py:190: The name tf.global_variables is deprecated. Please use tf.compat.v1.global_variables instead.
+
+WARNING:tensorflow:From /data/users/anaconda3/envs/tf-gpu-cuda10/lib/python3.6/site-packages/keras/backend/tensorflow_backend.py:199: The name tf.is_variable_initialized is deprecated. Please use tf.compat.v1.is_variable_initialized instead.
+
+WARNING:tensorflow:From /data/users/anaconda3/envs/tf-gpu-cuda10/lib/python3.6/site-packages/keras/backend/tensorflow_backend.py:206: The name tf.variables_initializer is deprecated. Please use tf.compat.v1.variables_initializer instead.
+
+2023-12-11 11:46:28.906128: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcublas.so.10.0
+2023-12-11 11:46:29.258584: I tensorflow/stream_executor/platform/default/dso_loader.cc:44] Successfully opened dynamic library libcudnn.so.7
+2023-12-11 11:46:30.460512: W tensorflow/stream_executor/cuda/redzone_allocator.cc:312] Not found: ./bin/ptxas not found
+Relying on driver to perform ptx compilation. This message will be only logged once.
+40/39 [==============================] - 35s 874ms/step - loss: 31.0109 - acc: 0.4800 - val_loss: 23.2702 - val_acc: 0.5000
+Epoch 2/50
+40/39 [==============================] - 17s 416ms/step - loss: 18.4605 - acc: 0.5200 - val_loss: 14.4644 - val_acc: 0.5000
+Epoch 3/50
+40/39 [==============================] - 17s 417ms/step - loss: 12.2685 - acc: 0.5706 - val_loss: 10.3040 - val_acc: 0.5510
+Epoch 4/50
+40/39 [==============================] - 17s 419ms/step - loss: 9.1171 - acc: 0.5544 - val_loss: 8.0515 - val_acc: 0.5714
+Epoch 5/50
+40/39 [==============================] - 17s 418ms/step - loss: 7.3513 - acc: 0.5375 - val_loss: 6.6319 - val_acc: 0.5408
+Epoch 6/50
+40/39 [==============================] - 17s 431ms/step - loss: 6.1159 - acc: 0.5656 - val_loss: 5.6511 - val_acc: 0.5408
+Epoch 7/50
+40/39 [==============================] - 17s 437ms/step - loss: 5.2644 - acc: 0.5706 - val_loss: 4.9792 - val_acc: 0.5510
+Epoch 8/50
+40/39 [==============================] - 18s 441ms/step - loss: 4.6757 - acc: 0.6831 - val_loss: 4.6830 - val_acc: 0.5204
+Epoch 9/50
+40/39 [==============================] - 18s 440ms/step - loss: 4.3012 - acc: 0.7012 - val_loss: 5.4054 - val_acc: 0.4898
+Epoch 10/50
+40/39 [==============================] - 18s 439ms/step - loss: 3.9850 - acc: 0.7381 - val_loss: 4.1565 - val_acc: 0.5102
+Epoch 11/50
+40/39 [==============================] - 18s 443ms/step - loss: 3.7455 - acc: 0.7519 - val_loss: 3.9569 - val_acc: 0.5714
+Epoch 12/50
+40/39 [==============================] - 18s 443ms/step - loss: 3.4959 - acc: 0.7675 - val_loss: 3.7383 - val_acc: 0.5102
+Epoch 13/50
+40/39 [==============================] - 18s 447ms/step - loss: 3.2705 - acc: 0.8125 - val_loss: 3.6424 - val_acc: 0.5000
+Epoch 14/50
+40/39 [==============================] - 18s 447ms/step - loss: 3.2118 - acc: 0.7719 - val_loss: 3.5584 - val_acc: 0.5510
+Epoch 15/50
+40/39 [==============================] - 18s 443ms/step - loss: 3.0070 - acc: 0.8519 - val_loss: 3.3815 - val_acc: 0.5510
+Epoch 16/50
+40/39 [==============================] - 18s 447ms/step - loss: 2.9346 - acc: 0.8188 - val_loss: 3.5108 - val_acc: 0.5000
+Epoch 17/50
+40/39 [==============================] - 18s 440ms/step - loss: 2.8518 - acc: 0.8269 - val_loss: 3.2664 - val_acc: 0.5204
+Epoch 18/50
+40/39 [==============================] - 18s 443ms/step - loss: 2.7365 - acc: 0.8719 - val_loss: 3.0698 - val_acc: 0.5816
+Epoch 19/50
+40/39 [==============================] - 18s 439ms/step - loss: 2.7664 - acc: 0.8125 - val_loss: 3.1766 - val_acc: 0.4898
+Epoch 20/50
+40/39 [==============================] - 17s 437ms/step - loss: 2.5994 - acc: 0.8788 - val_loss: 2.8971 - val_acc: 0.6939
+Epoch 21/50
+40/39 [==============================] - 18s 442ms/step - loss: 2.5478 - acc: 0.8744 - val_loss: 2.8352 - val_acc: 0.6327
+Epoch 22/50
+40/39 [==============================] - 18s 444ms/step - loss: 2.5153 - acc: 0.8775 - val_loss: 2.7831 - val_acc: 0.6633
+Epoch 23/50
+40/39 [==============================] - 17s 436ms/step - loss: 2.4299 - acc: 0.9144 - val_loss: 2.7819 - val_acc: 0.5918
+Epoch 24/50
+40/39 [==============================] - 18s 445ms/step - loss: 2.4141 - acc: 0.8838 - val_loss: 2.7174 - val_acc: 0.8061
+Epoch 25/50
+40/39 [==============================] - 18s 443ms/step - loss: 2.3742 - acc: 0.9125 - val_loss: 2.6816 - val_acc: 0.6327
+Epoch 26/50
+40/39 [==============================] - 18s 442ms/step - loss: 2.3542 - acc: 0.9038 - val_loss: 2.8888 - val_acc: 0.5306
+Epoch 27/50
+40/39 [==============================] - 18s 442ms/step - loss: 2.3391 - acc: 0.8950 - val_loss: 3.2503 - val_acc: 0.5000
+Epoch 28/50
+40/39 [==============================] - 18s 439ms/step - loss: 2.3265 - acc: 0.8894 - val_loss: 2.5387 - val_acc: 0.7347
+Epoch 29/50
+40/39 [==============================] - 18s 440ms/step - loss: 2.2909 - acc: 0.8994 - val_loss: 2.6051 - val_acc: 0.5714
+Epoch 30/50
+40/39 [==============================] - 18s 439ms/step - loss: 2.2457 - acc: 0.9238 - val_loss: 2.5516 - val_acc: 0.6837
+Epoch 31/50
+40/39 [==============================] - 18s 444ms/step - loss: 2.2373 - acc: 0.9175 - val_loss: 2.5694 - val_acc: 0.5714
+Epoch 32/50
+40/39 [==============================] - 18s 444ms/step - loss: 2.2311 - acc: 0.9269 - val_loss: 2.5322 - val_acc: 0.7041
+Epoch 33/50
+40/39 [==============================] - 18s 443ms/step - loss: 2.1828 - acc: 0.9300 - val_loss: 2.6654 - val_acc: 0.6020
+Epoch 34/50
+40/39 [==============================] - 18s 438ms/step - loss: 2.1988 - acc: 0.9119 - val_loss: 2.3935 - val_acc: 0.8265
+Epoch 35/50
+40/39 [==============================] - 17s 436ms/step - loss: 2.1713 - acc: 0.9325 - val_loss: 2.3563 - val_acc: 0.8265
+Epoch 36/50
+40/39 [==============================] - 18s 445ms/step - loss: 2.1941 - acc: 0.9100 - val_loss: 2.3800 - val_acc: 0.7959
+Epoch 37/50
+40/39 [==============================] - 17s 433ms/step - loss: 2.1536 - acc: 0.9275 - val_loss: 2.3534 - val_acc: 0.8673
+Epoch 38/50
+40/39 [==============================] - 18s 439ms/step - loss: 2.1474 - acc: 0.9269 - val_loss: 2.3245 - val_acc: 0.8776
+Epoch 39/50
+40/39 [==============================] - 17s 436ms/step - loss: 2.1455 - acc: 0.9375 - val_loss: 2.3508 - val_acc: 0.8265
+Epoch 40/50
+40/39 [==============================] - 17s 435ms/step - loss: 2.1878 - acc: 0.9132 - val_loss: 2.3372 - val_acc: 0.8367
+Epoch 41/50
+40/39 [==============================] - 18s 438ms/step - loss: 2.1154 - acc: 0.9325 - val_loss: 2.3052 - val_acc: 0.8673
+Epoch 42/50
+40/39 [==============================] - 18s 440ms/step - loss: 2.1253 - acc: 0.9444 - val_loss: 2.3423 - val_acc: 0.8367
+Epoch 43/50
+40/39 [==============================] - 17s 437ms/step - loss: 2.1116 - acc: 0.9413 - val_loss: 2.3257 - val_acc: 0.8367
+Epoch 44/50
+40/39 [==============================] - 18s 442ms/step - loss: 2.1284 - acc: 0.9263 - val_loss: 2.2744 - val_acc: 0.8980
+Epoch 45/50
+40/39 [==============================] - 18s 442ms/step - loss: 2.1309 - acc: 0.9250 - val_loss: 2.2789 - val_acc: 0.8878
+Epoch 46/50
+40/39 [==============================] - 17s 433ms/step - loss: 2.1140 - acc: 0.9325 - val_loss: 2.2740 - val_acc: 0.8776
+Epoch 47/50
+40/39 [==============================] - 17s 433ms/step - loss: 2.1187 - acc: 0.9375 - val_loss: 2.3553 - val_acc: 0.7857
+Epoch 48/50
+40/39 [==============================] - 18s 441ms/step - loss: 2.1368 - acc: 0.9250 - val_loss: 2.2767 - val_acc: 0.8571
+Epoch 49/50
+40/39 [==============================] - 18s 438ms/step - loss: 2.0958 - acc: 0.9375 - val_loss: 2.2553 - val_acc: 0.8980
+Epoch 50/50
+40/39 [==============================] - 17s 437ms/step - loss: 2.0910 - acc: 0.9544 - val_loss: 2.2503 - val_acc: 0.8878
+

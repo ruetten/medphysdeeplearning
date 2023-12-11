@@ -51,7 +51,7 @@ CNN_batch_size = 10
 RNN_batch_size = 5
 val_split = 0.2
 optimizer = Adam(lr=1e-5)
-final_layer_size = 5
+final_layer_size = 40
 
 model_filepath = '//export/home/lruetten/Documents/medphys_deep_learning/CNN+RNN-2class-1cnn-CLEAN'
 mri_datapath = '//data/data_wnx3/data_wnx1/_Data/AlzheimersDL/CNN+RNN-2class-1cnn-CLEAN/ADNI_volumes_customtemplate_float32'
@@ -59,7 +59,7 @@ mri_datapath = '//data/data_wnx3/data_wnx1/_Data/AlzheimersDL/CNN+RNN-2class-1cn
 
 params_dict = { 'CNN_w_regularizer': CNN_w_regularizer,
                'CNN_batch_size': CNN_batch_size,
-               'CNN_drop_rate': CNN_drop_rate, 'epochs': 64,
+               'CNN_drop_rate': CNN_drop_rate, 'epochs': 50,
           'gpu': "/gpu:0", 'model_filepath': model_filepath, 
           'image_shape': (target_rows, target_cols, depth, axis),
           'num_clinical': num_clinical,
