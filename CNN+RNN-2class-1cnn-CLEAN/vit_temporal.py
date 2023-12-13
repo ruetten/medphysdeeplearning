@@ -8,6 +8,41 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 from einops import rearrange, repeat, pack, unpack
 from einops.layers.torch import Rearrange
 
+import csv
+
+class CSVDataset(Dataset):
+    def __init__(self, filepath='predictions_5.csv', num_features=5, num_channels=1, num_classes=2):
+        self.filepath = filepath
+        self.num_features = num_features
+        self.num_channels = num_channels
+        self.num_samples, self.data, self.labels = self.generate_data()
+
+    def generate_data(self):
+        data = []
+        labels = []
+
+        csv_file_path = self.filepath
+
+        with open(csv_file_path, 'r') as file:
+            csv_reader = csv.DictReader(file)
+
+            i = 0
+            for row in csv_reader:
+                label = row['Class']
+                features = torch.tensor([float(item) for item in row['Predictions'].strip('[]').split()]).reshape(1, num_features)
+                #print(label, features, type(features), features.shape)
+            
+                data.append(features)
+                labels.append(torch.tensor(int(label)).view(1))
+                i = i + 1
+
+        return i, torch.stack(data).unsqueeze(0), torch.tensor(labels)
+
+    def __len__(self):
+        return self.num_samples
+
+    def __getitem__(self, idx):
+        return self.data[0][idx], self.labels[idx]
 
 # Dummy Dataset class
 class DummyDataset(Dataset):
@@ -36,6 +71,7 @@ class DummyDataset(Dataset):
                 sample = torch.randn((self.num_channels, self.num_features))
                 sample = torch.clamp(sample, 0, 1)  # Normalize to the range [-1, 1]
 
+            print(sample, type(sample), sample.shape)
             data.append(sample)
             labels.append(class_label)
 
@@ -159,19 +195,23 @@ class ViT(nn.Module):
 if __name__ == '__main__':
 
     # Create dummy dataset
-    num_samples = 1000
     num_channels = 1
-    num_features = 15
+    num_features = 40
     num_classes = 2
 
-    dummy_dataset = DummyDataset(num_samples=num_samples, num_features=num_features, num_channels=num_channels, num_classes=num_classes)
+    #dummy_dataset = DummyDataset(num_samples=1000, num_features=num_features, num_channels=num_channels, num_classes=num_classes)
+    dummy_dataset = CSVDataset(filepath='predictions_40.csv', num_features=num_features)
 
-    print(len(dummy_dataset.data))
-    print(len(dummy_dataset.labels))
+    #print(dummy_dataset.data)
+    #print(len(dummy_dataset.data[0][0]))
+    #print(len(dummy_dataset.labels))
 
     # Split dataset into train and validation sets
+    num_samples = len(dummy_dataset.labels)
     train_size = int(0.8 * num_samples)
     val_size = num_samples - train_size
+
+    #print(len(dummy_dataset.labels), train_size, val_size, train_size + val_size)
 
     train_dataset, val_dataset = torch.utils.data.random_split(dummy_dataset, [train_size, val_size])
 
@@ -187,8 +227,8 @@ if __name__ == '__main__':
         #break
     
     model = ViT(
-        seq_len = 15,
-        patch_size = 5,
+        seq_len = num_features,
+        patch_size = num_features,
         num_classes = 2,
         channels = 1,
         dim = 32,
@@ -209,7 +249,7 @@ if __name__ == '__main__':
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     # Training loop
-    num_epochs = 1
+    num_epochs = 1000
     for epoch in range(num_epochs):
         model.train()
         for inputs, labels in train_loader:  # Assuming you have a train_loader
