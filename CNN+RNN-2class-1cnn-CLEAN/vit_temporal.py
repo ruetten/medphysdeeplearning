@@ -4,11 +4,13 @@ import torch.optim as optim
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
 import numpy as np
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, roc_auc_score
 from einops import rearrange, repeat, pack, unpack
 from einops.layers.torch import Rearrange
 
 import csv
+import loader
+
 
 class CSVDataset(Dataset):
     def __init__(self, filepath='predictions_5.csv', num_features=5, num_channels=1, num_classes=2):
@@ -20,23 +22,89 @@ class CSVDataset(Dataset):
     def generate_data(self):
         data = []
         labels = []
+        PTIDs = []
+        imgIDs = []
 
         csv_file_path = self.filepath
 
         with open(csv_file_path, 'r') as file:
             csv_reader = csv.DictReader(file)
-
-            i = 0
             for row in csv_reader:
                 label = row['Class']
-                features = torch.tensor([float(item) for item in row['Predictions'].strip('[]').split()]).reshape(1, num_features)
-                #print(label, features, type(features), features.shape)
-            
+                features = torch.tensor([float(item) for item in row['Predictions'].strip('[]').split()]).reshape(1, num_features-1)
+                ptid = row['PTIDs']
+
                 data.append(features)
                 labels.append(torch.tensor(int(label)).view(1))
-                i = i + 1
+                PTIDs.append(ptid)
+                imgIDs.append(row['ImageIDs'])
 
-        return i, torch.stack(data).unsqueeze(0), torch.tensor(labels)
+        # Create a dictionary to store unique Features for each PTID
+        ptid_features_dict = {}
+        ptid_labels_dict = {}
+        ptid_imgID_dict = {}
+
+        # Iterate through the data and populate the dictionary
+        for ptid, feature, label, imgID in zip(PTIDs, data, labels, imgIDs):
+        #for ptid, feature, label in zip(PTIDs, data, labels):
+            if ptid in ptid_features_dict:
+                ptid_features_dict[ptid].append(feature)
+                ptid_imgID_dict[ptid].append(imgID)
+            else:
+                ptid_features_dict[ptid] = [feature]
+                ptid_labels_dict[ptid] = label
+                ptid_imgID_dict[ptid] = [imgID]
+
+        data = []
+        labels = []
+        the_fields = loader.getData()
+        for key, value in ptid_features_dict.items():
+            imgIDs = ptid_imgID_dict[key]
+
+            # Entry point code here just for debugging
+            the_result, imgIDs_time = loader.parseTimestamps(key, the_fields)
+            #print("VIT1", the_result, imgIDs_time)
+            #print(imgIDs)
+            time_embed = []
+            for imgID in imgIDs:
+                try:
+                    idx = imgIDs_time[0].index(imgID)
+                    time_embed.append(the_result[0][idx])
+                except ValueError:
+                    time_embed.append(-1)
+            while len(time_embed) < 3:
+                time_embed.append(-1)
+            print(time_embed)
+            
+            result_tensor = torch.concatenate(value, axis=1)
+
+            # Check if the result tensor is less than 15 columns
+            if result_tensor.shape[1] < (num_features-1)*3:
+                # Calculate the number of columns to pad
+                padding_size = (num_features-1)*3 - result_tensor.shape[1]
+
+                # Create a padding array with -1 and concatenate it to the result_tensor
+                padding_array = torch.full((1, padding_size), -1)
+                result_tensor = torch.concatenate([result_tensor, padding_array], axis=1)
+
+            #result_tensor = torch.concatenate([result_tensor, torch.tensor(time_embed).unsqueeze(0)], axis=1)
+
+            final_result_tensor = []
+
+            print(result_tensor)
+            i = 0
+            for time in time_embed:
+                for v in range(num_features-1):
+                    final_result_tensor.append(result_tensor[0][i+v])
+                i = i + num_features-1
+                final_result_tensor.append(time)
+            final_result_tensor = torch.tensor(final_result_tensor).unsqueeze(0)
+
+            print(final_result_tensor)
+            data.append(final_result_tensor)
+            labels.append(ptid_labels_dict[key])
+
+        return len(ptid_labels_dict), torch.stack(data).unsqueeze(0), torch.tensor(labels)
 
     def __len__(self):
         return self.num_samples
@@ -193,28 +261,32 @@ class ViT(nn.Module):
         return self.mlp_head(cls_tokens)
 
 if __name__ == '__main__':
-
     # Create dummy dataset
     num_channels = 1
-    num_features = 5
+    num_features = 6
     num_classes = 2
 
     #dummy_dataset = DummyDataset(num_samples=1000, num_features=num_features, num_channels=num_channels, num_classes=num_classes)
-    dummy_dataset = CSVDataset(filepath='predictions_5.csv', num_features=5)
+    dummy_dataset = CSVDataset(filepath='predictions_5.csv', num_features=num_features)
 
     #print(dummy_dataset.data)
     #print(len(dummy_dataset.data[0][0]))
     #print(len(dummy_dataset.labels))
 
     # Split dataset into train and validation sets
-    num_samples = len(dummy_dataset.labels)
+    num_samples = len(dummy_dataset)
     train_size = int(0.8 * num_samples)
     val_size = num_samples - train_size
 
     #print(len(dummy_dataset.labels), train_size, val_size, train_size + val_size)
 
     train_dataset, val_dataset = torch.utils.data.random_split(dummy_dataset, [train_size, val_size])
+    # Define the K-fold cross-validation
+    #kf = KFold(n_splits=5, shuffle=True, random_state=42)
 
+    #for fold, (train_indices, val_indices) in enumerate(kf.split(X)):
+        #print(f"Fold {fold + 1}")
+    
     # Create data loaders
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
@@ -227,8 +299,8 @@ if __name__ == '__main__':
         #break
     
     model = ViT(
-        seq_len = num_features,
-        patch_size = num_features,
+        seq_len = 18, #(num_features+1)*3,
+        patch_size = 6, #num_features+1,
         num_classes = 2,
         channels = 1,
         dim = 32,
@@ -249,7 +321,7 @@ if __name__ == '__main__':
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     # Training loop
-    num_epochs = 1000
+    num_epochs = 100
     for epoch in range(num_epochs):
         model.train()
         for inputs, labels in train_loader:  # Assuming you have a train_loader
@@ -292,9 +364,29 @@ if __name__ == '__main__':
     precision = precision_score(all_labels, all_predictions)
     recall = recall_score(all_labels, all_predictions)
     f1 = f1_score(all_labels, all_predictions)
+    conf_matrix = confusion_matrix(all_labels, all_predictions)
 
+    # Calculate sensitivity and specificity
+    true_positive = conf_matrix[1, 1]
+    false_negative = conf_matrix[1, 0]
+    true_negative = conf_matrix[0, 0]
+    false_positive = conf_matrix[0, 1]
+    
+    sensitivity = true_positive / (true_positive + false_negative)
+    specificity = true_negative / (true_negative + false_positive)
+    
+    # Calculate AUC
+    auc = roc_auc_score(all_labels, all_predictions) 
+    
+    # Print the results
     print(f"Accuracy: {accuracy:.4f}")
     print(f"Precision: {precision:.4f}")
     print(f"Recall: {recall:.4f}")
     print(f"F1 Score: {f1:.4f}")
+    print(f"Sensitivity: {sensitivity:.4f}")
+    print(f"Specificity: {specificity:.4f}")
+    print(f"AUC: {auc:.4f}")
 
+    # Print confusion matrix
+    print("Confusion Matrix:")
+    print(conf_matrix)

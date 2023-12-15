@@ -94,7 +94,7 @@ def parseData(ptid, fields):
 
     # Find time delta using initial exam dates. Time in milliseconds
     # delta = max(data["examdate"]) - min(data["examdate"])
-    print(delta)
+    #print(delta)
     
     listOfTriplets = []
 
@@ -106,7 +106,7 @@ def parseData(ptid, fields):
         listOfTriplets.append(parseDataOne(data, indices))
 
     # For debugging
-    print(len(listOfTriplets))
+    #print(listOfTriplets)
     return listOfTriplets
 
 # Analogous to parseData(), but sublists contain timestamps (in days since first scan) instead of tensors
@@ -120,25 +120,30 @@ def parseTimestamps(ptid, fields):
         return None
     
     # Debugging
-    print(data)
+    #print(data)
 
     # Assert that there are 3 images in the image ID list
-    if data["count"] < 3:
+    while data["count"] < 3:
         print("parsedata(): Less than 3 images in source", file=sys.stderr)
-        return None
+        data["ids"].append(None)
+        data["examdate"].append(-1)
+        data["count"] = data["count"] + 1
 
     listOfTriplets = []
+    imgIdTriplets = []
 
     # For each set of NGRAMS (default is 3)
     for i in range(int(data["count"] - NGRAMS + 1)):
         indices = [i, i+1, i+2]
 
         # Load up the list with the timestamps
-        listOfTriplets.append(parseTimestampOne(data, indices))
+        deltas, imgIDs = parseTimestampOne(data, indices)
+        listOfTriplets.append(deltas)
+        imgIdTriplets.append(imgIDs)
 
     # For debugging
-    print(len(listOfTriplets))
-    return listOfTriplets
+    #print(len(listOfTriplets))
+    return listOfTriplets, imgIdTriplets
 
 ###
 # Get the list of tensors given a dictionary with all relevant images and which images to use
@@ -163,7 +168,7 @@ def parseDataOne(data, indices):
         cur_id = indices[i]
 
         img_id = data["ids"][cur_id]
-        print(data["examdate"][cur_id])
+        #print(data["examdate"][cur_id])
         
         # Variables help keep the lines somewhat condensed
         ad_dir = "AD_FDGPET_preprocessed"
@@ -195,7 +200,7 @@ def parseDataOne(data, indices):
     return listOfTensors
 
     # For debugging
-    print(tensor.shape)
+    #print(tensor.shape)
 
 # Analogous to parseDataOne(), loads timestamp (in days since first scan) instead of image data    
 def parseTimestampOne(data, indices):
@@ -208,35 +213,45 @@ def parseTimestampOne(data, indices):
         print("parseDataOne(): Indices is of incorrect length", file=sys.stderr)
         return None
 
+    listOfIds = [data["ids"][i] for i in indices]
+
     listOfDates = []
-    firstDate = min(data["examdate"])
+    firstDateCandidates = data["examdate"].copy()
+    while min(firstDateCandidates) == -1:
+        firstDateCandidates.remove(-1)
+    firstDate = min(firstDateCandidates)
 
     SEC_TO_HR = 3600
     HR_TO_DAY = 24
+    DAY_TO_MON = 30
 
     for i in range(3):
         cur_id = indices[i]
-
-        delta = data["examdate"][cur_id] - firstDate
+        
+        if data["examdate"][cur_id] == -1:
+            delta = -1
+            deltaDays = -1
+        else:
+            delta = data["examdate"][cur_id] - firstDate
+            deltaDays = delta / SEC_TO_HR / HR_TO_DAY / DAY_TO_MON
 
         # Error if the time delta is negative, inlude in list anyways
-        if delta < 0:
-            print("Negative time difference encountered for image %d" % data["ids"][cur_id], file=sys.stderr)
+        #if delta < 0:
+        #    print("Negative time difference encountered for image %d" % data["ids"][cur_id], file=sys.stderr)
 
-        deltaDays = delta / SEC_TO_HR / HR_TO_DAY
 
         # Append the timestamp to the list
         listOfDates.append(int(deltaDays))
 
     # For debugging
-    print(listOfDates)
+    #print("proof of concept", listOfDates, listOfIds)
  
-    return listOfDates
+    return listOfDates, listOfIds
 
     
 # Entry point code here just for debugging
-the_ptid = input("(loader.py) PTID from CSV: ")
-the_fields = getData()
+#the_ptid = input("(loader.py) PTID from CSV: ")
+#the_fields = getData()
 
-the_result = parseTimestamps(the_ptid, the_fields)
-print(len(the_result[0]))
+#the_result = parseTimestamps(the_ptid, the_fields)
+#print(len(the_result[0]))
