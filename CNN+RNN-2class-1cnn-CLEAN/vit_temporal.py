@@ -196,11 +196,11 @@ if __name__ == '__main__':
 
     # Create dummy dataset
     num_channels = 1
-    num_features = 40
+    num_features = 5
     num_classes = 2
 
     #dummy_dataset = DummyDataset(num_samples=1000, num_features=num_features, num_channels=num_channels, num_classes=num_classes)
-    dummy_dataset = CSVDataset(filepath='predictions_40.csv', num_features=num_features)
+    dummy_dataset = CSVDataset(filepath='predictions_5.csv', num_features=5)
 
     #print(dummy_dataset.data)
     #print(len(dummy_dataset.data[0][0]))
