@@ -16,7 +16,7 @@ mci\_train.py - this file is the original file that trains a CNN and then the RN
 ### Our important files in this directory:
 
  - cnn\_train.py - RNN is removed, only trains the CNN and produces an output predictions.csv file to input into the ViT
- - vit\_temporal.py - MAIN CODE OF OUR HOMEWORK SUBMISSION, MODIFIED AS NEEDED FOR EXPERIEMENTS; a HEAVILY modified version of vit\_1d.py from the vit-pytorch git repo. Handles input of prediction.csv files and does the all of the training and output of results. Imports loader.py from this directory
+ - vit\_temporal.py and vit\_temporal\_seq.py - MAIN CODE OF OUR HOMEWORK SUBMISSION, MODIFIED AS NEEDED FOR EXPERIEMENTS; a HEAVILY modified version of vit\_1d.py from the vit-pytorch git repo. Handles input of prediction.csv files and does the all of the training and output of results. Imports loader.py from this directory
  - loader.py - modified version of loader.py (one directory up) in order to integrate it with the dataloader in vit\_temporal.py
 
 ### Output files:

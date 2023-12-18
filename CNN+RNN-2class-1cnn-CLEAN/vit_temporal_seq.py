@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import csv
 import loader
 
+from sklearn import metrics
+from sklearn.utils import resample
 
 class CSVDataset(Dataset):
     def __init__(self, filepath='predictions_5.csv', num_features=5, num_channels=1, num_classes=2):
@@ -27,12 +29,13 @@ class CSVDataset(Dataset):
         imgIDs = []
 
         csv_file_path = self.filepath
+        num_features = self.num_features
 
         with open(csv_file_path, 'r') as file:
             csv_reader = csv.DictReader(file)
             for row in csv_reader:
                 label = row['Class']
-                features = torch.tensor([float(item) for item in row['Predictions'].strip('[]').split()]).reshape(1, num_features-1)
+                features = torch.tensor([float(item) for item in row['Predictions'].strip('[]').split()]).reshape(1, self.num_features)
                 ptid = row['PTIDs']
 
                 data.append(features)
@@ -80,9 +83,9 @@ class CSVDataset(Dataset):
             result_tensor = torch.concatenate(value, axis=1)
 
             # Check if the result tensor is less than 15 columns
-            if result_tensor.shape[1] < (num_features-1)*3:
+            if result_tensor.shape[1] < (num_features)*3:
                 # Calculate the number of columns to pad
-                padding_size = (num_features-1)*3 - result_tensor.shape[1]
+                padding_size = (num_features)*3 - result_tensor.shape[1]
 
                 # Create a padding array with -1 and concatenate it to the result_tensor
                 padding_array = torch.full((1, padding_size), -1)
@@ -90,19 +93,19 @@ class CSVDataset(Dataset):
 
             #result_tensor = torch.concatenate([result_tensor, torch.tensor(time_embed).unsqueeze(0)], axis=1)
 
-            final_result_tensor = []
+            #final_result_tensor = []
 
             #print(result_tensor)
-            i = 0
-            for time in time_embed:
-                for v in range(num_features-1):
-                    final_result_tensor.append(result_tensor[0][i+v])
-                i = i + num_features-1
-                final_result_tensor.append(time)
-            final_result_tensor = torch.tensor(final_result_tensor).unsqueeze(0)
+            #i = 0
+            #for time in time_embed:
+            #    for v in range(num_features):
+            #        final_result_tensor.append(result_tensor[0][i+v])
+            #    i = i + num_features
+            #    final_result_tensor.append(time)
+            #final_result_tensor = torch.tensor(final_result_tensor).unsqueeze(0)
 
             #print(final_result_tensor)
-            data.append(final_result_tensor)
+            data.append(result_tensor)
             labels.append(ptid_labels_dict[key])
 
         return len(ptid_labels_dict), torch.stack(data).unsqueeze(0), torch.tensor(labels)
@@ -261,14 +264,14 @@ class ViT(nn.Module):
 
         return self.mlp_head(cls_tokens)
 
-if __name__ == '__main__':
+def main_vit_sequence():
     # Create dummy dataset
     num_channels = 1
-    num_features = 6
+    num_features = 40
     num_classes = 2
 
     #dummy_dataset = DummyDataset(num_samples=1000, num_features=num_features, num_channels=num_channels, num_classes=num_classes)
-    dummy_dataset = CSVDataset(filepath='predictions_5.csv', num_features=num_features)
+    dummy_dataset = CSVDataset(filepath='predictions_40.csv', num_features=num_features)
 
     #print(dummy_dataset.data)
     #print(len(dummy_dataset.data[0][0]))
@@ -300,8 +303,8 @@ if __name__ == '__main__':
         #break
     
     model = ViT(
-        seq_len = 18, #(num_features+1)*3,
-        patch_size = 6, #num_features+1,
+        seq_len = num_features*3,
+        patch_size = num_features,
         num_classes = 2,
         channels = 1,
         dim = 32,
@@ -322,7 +325,7 @@ if __name__ == '__main__':
     optimizer = optim.Adam(model.parameters(), lr=0.001)
 
     # Training loop
-    num_epochs = 100
+    num_epochs = 25
     for epoch in range(num_epochs):
         model.train()
         for inputs, labels in train_loader:  # Assuming you have a train_loader
@@ -340,7 +343,7 @@ if __name__ == '__main__':
                 val_loss = criterion(outputs, labels)
 
         #print(f'Epoch {epoch+1}/{num_epochs}, Loss: {loss.item()}, Val Loss: {val_loss.item()}')
-        print(f'{epoch+1}, {loss.item()}, {val_loss.item()}')
+        print(f'{loss.item()}, {val_loss.item()}')
 
     # Save the trained model
     torch.save(model.state_dict(), 'vit_time_series.pth')
@@ -394,6 +397,33 @@ if __name__ == '__main__':
     print("Confusion Matrix:")
     print(conf_matrix)
 
+    # UNSURE IF THIS BOOTSTRAP THING WORKS?
+    # Number of bootstrap samples
+    n_bootstrap = 1000
+
+    # Initialize an array to store bootstrapped AUC values
+    bootstrap_auc_values = np.zeros(n_bootstrap)
+
+    # Perform bootstrapping
+    for i in range(n_bootstrap):
+        # Resample with replacement
+        indices = resample(np.arange(len(all_labels)))
+        resampled_labels = all_labels[indices]
+        resampled_scores = all_predictions[indices]
+
+        # Calculate AUC for the resampled data
+        fpr, tpr, _ = metrics.roc_curve(resampled_labels, resampled_scores)
+        bootstrap_auc_values[i] = metrics.auc(fpr, tpr)
+
+    # Calculate standard error
+    se_auc = np.std(bootstrap_auc_values, ddof=1)
+
+    # Print the standard error
+    print(f"Standard Error of AUC: {se_auc:.4f}")
+
+    return accuracy, precision, recall, f1, conf_matrix, sensitivity, specificity, auc_value, se_auc
+
+def plot_roc_curve():
     # Generate ROC curve
     fpr, tpr, thresholds = roc_curve(all_labels, all_predictions)
     roc_auc = auc(fpr, tpr)
@@ -407,7 +437,7 @@ if __name__ == '__main__':
     plt.fill_between(fpr, tpr, step='post', alpha=0.2, color='darkorange')
     #plt.plot(fpr, tpr, color='darkorange', lw=2, label=f'ROC curve (AUC = {roc_auc:.2f})')
     plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
-    plt.xlim([0.0, 1.0])
+    plt.xlim([-0.5, 1.0])
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
@@ -416,3 +446,47 @@ if __name__ == '__main__':
 
     # Save ROC curve to a file
     plt.savefig('roc_curve.png')
+
+
+
+# Python program to get average of a list
+def Average(lst):
+    return sum(lst) / len(lst)
+
+if __name__ == '__main__':
+    N = 10
+    acc_sum = []
+    prc_sum = []
+    rec_sum = []
+    f1__sum = []
+    cnf_sum = np.array([[0,0],[0,0]])
+    sen_sum = []
+    spc_sum = []
+    auc_sum = []
+    std_err_sum = []
+    for i in range(N):
+        accuracy, precision, recall, f1, conf_matrix, sensitivity, specificity, auc_value, std_err = main_vit_sequence()
+        acc_sum.append(accuracy)
+        prc_sum.append(precision)
+        rec_sum.append(recall)
+        f1__sum.append(f1)
+        cnf_sum = cnf_sum + np.array(conf_matrix)
+        sen_sum.append(sensitivity)
+        spc_sum.append(specificity)
+        auc_sum.append(auc_value)
+        std_err_sum.append(std_err)
+    
+    # Print the results
+    print(f"Accuracy: {Average(acc_sum):.4f}")
+    print(f"Precision: {Average(prc_sum):.4f}")
+    print(f"Recall: {Average(rec_sum):.4f}")
+    print(f"F1 Score: {Average(f1__sum):.4f}")
+    print(f"Sensitivity: {Average(sen_sum):.4f}")
+    print(f"Specificity: {Average(spc_sum):.4f}")
+    print(f"AUC: {Average(auc_sum):.4f}")
+    print(f"AUC std err: {Average(std_err_sum):.4f}")
+
+    # Print confusion matrix
+    print("Confusion Matrix:")
+    print(cnf_sum / N)
+
