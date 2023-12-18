@@ -4,29 +4,32 @@ Deep Learning projects with Department of Medical Physics - University of Wiscon
 # BMI/CS 771 Learning Based Methods for Computer Vision
 
 ## Dataset used
-Not included in submission, we used a subset of the ADNI dataset
+Not included in submission, we used a subset of PET scans from the ADNI dataset
 
 ## CNN+RNN-2class-1cnn-CLEAN
 The CNN+RNN model(s) that we got from the lab.
 
-Main original file: 
+### Main original file: 
+
 mci\_train.py - this file is the original file that trains a CNN and then the RNN and produces a bunch of results in the figures directory
 
-Our important files in this directory:
-cnn\_train.py - RNN is removed, only trains the CNN and produces an output predictions.csv file to input into the ViT
-vit\_temporal.py - MAIN CODE OF OUR HOMEWORK SUBMISSION, MODIFIED AS NEEDED FOR EXPERIEMENTS; a HEAVILY modified version of vit\_1d.py from the vit-pytorch git repo. Handles input of prediction.csv files and does the all of the training and output of results. Imports loader.py from this directory
-loader.py - modified version of loader.py (one directory up) in order to integrate it with the dataloader in vit\_temporal.py
+### Our important files in this directory:
 
-Output files:
-predictions.csv - latest run
-predictions\_5.csv - renamed saved embed5 vectors (original last layer of CNN)
-predictions\_32.csv - renamed saved embed32 vectors (attempted making last layer of CNN bigger and retrained)
-predictions\_40.csv - renamed saved embed40 vectors (second to last layer of original CNN)
+ - cnn\_train.py - RNN is removed, only trains the CNN and produces an output predictions.csv file to input into the ViT
+ - vit\_temporal.py - MAIN CODE OF OUR HOMEWORK SUBMISSION, MODIFIED AS NEEDED FOR EXPERIEMENTS; a HEAVILY modified version of vit\_1d.py from the vit-pytorch git repo. Handles input of prediction.csv files and does the all of the training and output of results. Imports loader.py from this directory
+ - loader.py - modified version of loader.py (one directory up) in order to integrate it with the dataloader in vit\_temporal.py
 
-Other files worth mentioning:
-SavedCNNWeights is the saved weights of our CNN model for tensorflow 1.x
-figures directory has a lot of good results from the CNN
-grouper.py was a prototyping file to figure out how to read in and group images with the same PTIDs together
+### Output files:
+
+ - predictions.csv - latest run
+ - predictions\_5.csv - renamed saved embed5 vectors (original last layer of CNN)
+ - predictions\_32.csv - renamed saved embed32 vectors (attempted making last layer of CNN bigger and retrained)
+ - predictions\_40.csv - renamed saved embed40 vectors (second to last layer of original CNN)
+
+### Other files worth mentioning:
+ - SavedCNNWeights is the saved weights of our CNN model for tensorflow 1.x
+ - figures directory has a lot of good results from the CNN
+ - grouper.py was a prototyping file to figure out how to read in and group images with the same PTIDs together
 
 ## Environments
  - environment.yml: Conda environment that was used to train the CNN (note: Code was written a few years ago, so uses Tensorflow 1.X and ran on WIMR lab GPUs)
